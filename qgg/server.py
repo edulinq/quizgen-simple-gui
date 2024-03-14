@@ -8,6 +8,7 @@ import traceback
 import urllib.parse
 
 import qgg.static.handler
+import qgg.project
 
 DEFAULT_PORT = 12345
 ENCODING = 'utf-8'
@@ -18,17 +19,23 @@ ROUTES = {
 
     r'^/static$': qgg.static.handler.handle,
     r'^/static/': qgg.static.handler.handle,
+
+    r'^/api/v1/project/fetch$': qgg.project.fetch_handler,
+    r'^/api/v1/project/dirent/fetch': qgg.project.fetch_dirent_handler,
 }
 
 def start(project_dir, port = DEFAULT_PORT):
     logging.info("Starting server on port %s, serving project at '%s'." % (str(port), project_dir))
 
+    _handler._project_dir = project_dir
     server = http.server.ThreadingHTTPServer(('', port), _handler)
 
     logging.info("Now listening for requests.")
     server.serve_forever()
 
 class _handler(http.server.BaseHTTPRequestHandler):
+    _project_dir = None
+
     def do_POST(self):
         self.handle_request(self._get_post_data)
 
@@ -52,16 +59,22 @@ class _handler(http.server.BaseHTTPRequestHandler):
             }
             payload = json.dumps(response).encode(ENCODING)
 
-        self.send_response(code)
+        if (code is None):
+            code = http.HTTPStatus.OK
 
-        for (key, value) in headers.items():
-            self.send_header(key, value)
-        self.end_headers()
+        if (headers is None):
+            headers = {}
 
         if (isinstance(payload, str)):
             payload = payload.encode(ENCODING)
         elif (not isinstance(payload, bytes)):
             payload = json.dumps(payload).encode(ENCODING)
+            headers['content-type'] = 'application/json'
+
+        self.send_response(code)
+        for (key, value) in headers.items():
+            self.send_header(key, value)
+        self.end_headers()
 
         self.wfile.write(payload)
 
@@ -78,7 +91,7 @@ class _handler(http.server.BaseHTTPRequestHandler):
 
         for (prefix, handler) in ROUTES.items():
             if (re.search(prefix, clean_path) is not None):
-                return handler(clean_path, data)
+                return handler(clean_path, data, project_dir = _handler._project_dir)
 
         logging.warning("Found no matching route for '%s'." % (path))
         return http.HTTPStatus.NOT_FOUND, {}, ''

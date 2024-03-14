@@ -9,7 +9,7 @@ INDEX_FILENAME = 'index.html'
 
 PREFIX = '/static'
 
-def handle(path, data):
+def handle(path, data, **kwargs):
     path = path.strip()
 
     # Note that this is a URL path (so will always have forward slashes).
@@ -28,9 +28,8 @@ def _handle_file(relpath):
     path = os.path.join(FILES_DIR, relpath)
     if (not os.path.isfile(path)):
         logging.warning("Found no matching static file for '%s'." % (path))
-        return http.HTTPStatus.NOT_FOUND, {}, ''
+        return http.HTTPStatus.NOT_FOUND, None, ''
 
-    code = http.HTTPStatus.OK
     headers = {}
 
     mime = mimetypes.guess_type(path)
@@ -40,4 +39,4 @@ def _handle_file(relpath):
     with open(path, 'rb') as file:
         contents = file.read()
 
-    return code, headers, contents
+    return None, headers, contents
