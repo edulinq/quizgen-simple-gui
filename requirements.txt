@@ -1,0 +1,6 @@
+eq-quizgen>=0.2.8
+
+build
+packaging>=21.3
+twine
+vermin
