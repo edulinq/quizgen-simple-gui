@@ -9,6 +9,7 @@ import urllib.parse
 
 import qgg.static.handler
 import qgg.project
+import qgg.question
 
 DEFAULT_PORT = 12345
 ENCODING = 'utf-8'
@@ -21,10 +22,16 @@ ROUTES = {
     r'^/static/': qgg.static.handler.handle,
 
     r'^/api/v1/project/fetch$': qgg.project.fetch_handler,
-    r'^/api/v1/project/dirent/fetch': qgg.project.fetch_dirent_handler,
+    r'^/api/v1/dirent/fetch': qgg.project.fetch_dirent_handler,
+
+    r'^/api/v1/question/fetch': qgg.question.fetch_handler,
+    r'^/api/v1/question/compile': qgg.question.compile_handler,
 }
 
 def start(project_dir, port = DEFAULT_PORT):
+    if (not os.path.isdir(project_dir)):
+        raise ValueError("Project dir does not exist: '%s'." % (str(project_dir)))
+
     logging.info("Starting server on port %s, serving project at '%s'." % (str(port), project_dir))
 
     _handler._project_dir = project_dir
@@ -53,6 +60,7 @@ class _handler(http.server.BaseHTTPRequestHandler):
             headers = {'content-type': 'application/json'}
 
             response = {
+                'locator': 0,
                 'status': 'failed',
                 'message': "Server encountered an error: '%s'" % (ex),
                 'trace': traceback.format_exc(),
@@ -81,7 +89,7 @@ class _handler(http.server.BaseHTTPRequestHandler):
     def _route(self, data):
         """
         Handle routing and calling handlers.
-        Handlers should take: (path, data).
+        Handlers should take: (api_path, project_dir, **params).
         Handlers should return: (http_code (int), headers (dict), payload (bytes)).
         """
 
@@ -91,7 +99,7 @@ class _handler(http.server.BaseHTTPRequestHandler):
 
         for (prefix, handler) in ROUTES.items():
             if (re.search(prefix, clean_path) is not None):
-                return handler(clean_path, data, project_dir = _handler._project_dir)
+                return handler(clean_path, _handler._project_dir, **data)
 
         logging.warning("Found no matching route for '%s'." % (path))
         return http.HTTPStatus.NOT_FOUND, {}, ''

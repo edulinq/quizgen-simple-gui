@@ -9,7 +9,7 @@ INDEX_FILENAME = 'index.html'
 
 PREFIX = '/static'
 
-def handle(path, data, **kwargs):
+def handle(path, project_dir, **kwargs):
     path = path.strip()
 
     # Note that this is a URL path (so will always have forward slashes).

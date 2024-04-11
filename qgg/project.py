@@ -3,24 +3,17 @@ import http
 import logging
 import os
 
+import qgg.util
+
 DIRENT_TYPE_FILE = 'file'
 DIRENT_TYPE_DIR = 'dir'
 
 ENCODING = 'utf-8'
 
-def fetch_dirent_handler(path, data, project_dir = None, **kwargs):
-    if (not os.path.isdir(project_dir)):
-        raise ValueError("Project dir does not exist: '%s'." % (str(project_dir)))
-
-    relpath = data.get('path', '').strip()
-    if (relpath == ''):
-        return http.HTTPStatus.BAD_REQUEST, None, {"message": "No path provided."}
-
-    path = os.path.join(project_dir, relpath)
-    if (not os.path.exists(path)):
-        message = "Path does not exist within project: '%s'." % (relpath)
-        logging.info(message + " Real Path: '%s'." % (path))
-        return http.HTTPStatus.BAD_REQUEST, None, {"message": message}
+def fetch_dirent_handler(api_path, project_dir, path = '', **kwargs):
+    path, error_info = qgg.util.get_request_relpath(project_dir, path)
+    if (error_info is not None):
+        return error_info
 
     if (not os.path.isfile(path)):
         return None, None, _get_dirents(path, recursive = False)
@@ -36,10 +29,7 @@ def fetch_dirent_handler(path, data, project_dir = None, **kwargs):
 
     return None, None, payload
 
-def fetch_handler(path, data, project_dir = None, **kwargs):
-    if (not os.path.isdir(project_dir)):
-        raise ValueError("Project dir does not exist: '%s'." % (str(project_dir)))
-
+def fetch_handler(api_path, project_dir, **kwargs):
     project = {
         "dirents": _get_dirents(project_dir),
     }
@@ -49,7 +39,7 @@ def fetch_handler(path, data, project_dir = None, **kwargs):
 def _get_dirents(base_dir, recursive = True):
     dirents = []
 
-    for dirent in os.listdir(base_dir):
+    for dirent in sorted(os.listdir(base_dir)):
         path = os.path.join(base_dir, dirent)
 
         if (os.path.isfile(path)):
