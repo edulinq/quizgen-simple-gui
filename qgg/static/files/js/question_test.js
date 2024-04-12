@@ -8,6 +8,16 @@ const FORMAT_TO_ACE_LANG_MODE = {
     'tex': 'latex',
 };
 
+const OUTPUT_CODE_FORMATS = [
+    'html',
+    'tex',
+];
+
+const OUTPUT_COMPILED_FORMATS = [
+    'html',
+    'pdf',
+];
+
 let nextID = 0;
 
 // A standard fetch to the API that understands how information and errors are passed.
@@ -44,48 +54,89 @@ async function compile_question(path, format) {
     return body.content;
 }
 
-async function render_question_input(path, parentSelector) {
+async function render_question_code_input(path, parentSelector) {
     const question = await fetch_question(path);
     const id = `code-editor-${nextID++}`;
 
     let container = document.createElement('div');
     container.id = id;
-    container.classList.add('question-container', 'question-input-container', 'language-json', 'code-editor');
+    container.classList.add('question-container', 'question-input-container', 'code-json', 'code-editor');
     container.textContent = JSON.stringify(question, null, 4);
 
     document.querySelector(parentSelector).appendChild(container);
 
     let editor = ace.edit(id);
-    editor.session.setMode('ace/mode/json5');
-    editor.session.setUseWorker(false);
-    editor.setTheme('ace/theme/github');
 
-    editor.setReadOnly(true);
+    editor.session.setOptions({
+        'mode': 'ace/mode/json5',
+        'useWorker': false,
+    });
+
+    editor.setOptions({
+        'theme': 'ace/theme/github',
+        'readOnly': false,
+        'showPrintMargin': false,
+    });
 }
 
-async function render_question_output(path, format, parentSelector) {
+async function render_question_code_output(path, format, parentSelector) {
+    if (!OUTPUT_CODE_FORMATS.includes(format)) {
+        throw new Error(`Format '${format}' cannot be rendered as code.`)
+    }
+
     const content = await compile_question(path, format);
     const id = `code-editor-${nextID++}`;
 
     let container = document.createElement('div');
     container.id = id;
-    container.classList.add('question-container', 'question-output-container', `language-${format}`, 'code-editor');
+    container.classList.add('question-container', 'question-output-container', `code-${format}`, 'code-editor');
     container.textContent = content;
 
     document.querySelector(parentSelector).appendChild(container);
 
     let editor = ace.edit(id);
-    editor.session.setMode(`ace/mode/${FORMAT_TO_ACE_LANG_MODE[format]}`);
-    editor.session.setUseWorker(false);
-    editor.setTheme('ace/theme/github');
-    editor.setReadOnly(true);
+
+    editor.session.setOptions({
+        'mode': `ace/mode/${FORMAT_TO_ACE_LANG_MODE[format]}`,
+        'useWorker': false,
+    });
+
+    editor.setOptions({
+        'theme': 'ace/theme/github',
+        'readOnly': true,
+        'showPrintMargin': false,
+    });
+}
+
+async function render_question_compiled_output(path, format, parentSelector) {
+    if (!OUTPUT_COMPILED_FORMATS.includes(format)) {
+        throw new Error(`Format '${format}' cannot be rendered as compiled.`)
+    }
+
+    let content = await compile_question(path, format);
+    const id = `compiled-viewer-${nextID++}`;
+
+    if (format === 'pdf') {
+        content = `<embed type="application/pdf" src="data:application/pdf;base64,${content}"/>`
+    }
+
+    let container = document.createElement('div');
+    container.id = id;
+    container.classList.add('question-container', 'question-output-container', `compiled-${format}`);
+    container.innerHTML = content;
+
+    document.querySelector(parentSelector).appendChild(container);
 }
 
 // TEST - This funcition is only for testing / establising the API.
 async function render_question(path) {
-    render_question_input(path, '.test-area');
-    render_question_output(path, 'html', '.test-area');
-    render_question_output(path, 'tex', '.test-area');
+    render_question_code_input(path, '.test-area');
+
+    render_question_code_output(path, 'html', '.test-area');
+    render_question_code_output(path, 'tex', '.test-area');
+
+    render_question_compiled_output(path, 'html', '.test-area');
+    render_question_compiled_output(path, 'pdf', '.test-area');
 }
 
 function main() {

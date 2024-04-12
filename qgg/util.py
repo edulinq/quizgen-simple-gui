@@ -1,6 +1,9 @@
+import base64
 import http
 import logging
 import os
+
+ENCODING = 'utf-8'
 
 def get_request_relpath(project_dir, relpath):
     """
@@ -19,3 +22,10 @@ def get_request_relpath(project_dir, relpath):
         return None, (http.HTTPStatus.BAD_REQUEST, None, {"message": message})
 
     return path, None
+
+def file_to_base64(path):
+    with open(path, 'rb') as file:
+        data = file.read()
+
+    content = base64.standard_b64encode(data)
+    return content.decode(ENCODING)

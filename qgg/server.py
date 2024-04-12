@@ -22,10 +22,11 @@ ROUTES = {
     r'^/static/': qgg.static.handler.handle,
 
     r'^/api/v1/project/fetch$': qgg.project.fetch_handler,
-    r'^/api/v1/dirent/fetch': qgg.project.fetch_dirent_handler,
+    r'^/api/v1/dirent/fetch$': qgg.project.fetch_dirent_handler,
 
-    r'^/api/v1/question/fetch': qgg.question.fetch_handler,
-    r'^/api/v1/question/compile': qgg.question.compile_handler,
+    r'^/api/v1/question/fetch$': qgg.question.fetch_handler,
+    r'^/api/v1/question/compile$': qgg.question.compile_handler,
+    r'^/api/v1/question/compile/pdf$': qgg.question.compile_pdf_handler,
 }
 
 def start(project_dir, port = DEFAULT_PORT):
