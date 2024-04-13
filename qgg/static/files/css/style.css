@@ -34,10 +34,20 @@ p, h1, h2, h3, h4, h5, h6 {
 
 /* END Reset */
 
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+.test-area {
+    width: 100%;
+    height: 90%;
+}
+
 .code-editor {
     position: relative;
+}
 
-    /* TEST */
-    height: 500px;
-    width: 1000px;
+.compiled-html {
+    overflow: auto;
 }
