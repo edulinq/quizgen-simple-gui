@@ -9,7 +9,7 @@ import quizgen.converter.convert
 import quizgen.pdf
 import quizgen.question.base
 
-import qgg.util
+import qgg.util.file
 
 DUMMY_PDF_FILENAME = 'Dummy Title.pdf'
 
@@ -71,7 +71,7 @@ def compile_pdf_handler(api_path, project_dir, path = '', key = False, **kwargs)
     try:
         out_dir = quizgen.pdf.make_pdf(variant, is_key = key)
         pdf_path = os.path.join(out_dir, DUMMY_PDF_FILENAME)
-        content = qgg.util.file_to_base64(pdf_path)
+        content = qgg.util.file.to_base64(pdf_path)
     except Exception as ex:
         message = "Question did not compile to 'pdf': '%s'." % (ex)
         logging.warning("%s Path: '%s'." % (message, path), exc_info = sys.exc_info())
@@ -91,6 +91,8 @@ def compile_pdf_handler(api_path, project_dir, path = '', key = False, **kwargs)
     }
 
 def _get_question_from_request(project_dir, relpath):
+    # TEST
+    raise ValueError("TEST - This needs changes")
     path, error_info = qgg.util.get_request_relpath(project_dir, relpath)
     if (error_info is not None):
         return None, error_info

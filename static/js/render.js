@@ -1,7 +1,7 @@
 'use strict;'
 
-const API_ENDPOINT_QUESTION_FETCH = '/api/v1/question/fetch';
-const API_ENDPOINT_QUESTION_COMPILE = '/api/v1/question/compile';
+let qgg = qgg ?? {};
+qgg.render = qgg.render ?? {};
 
 const FORMAT_TO_ACE_LANG_MODE = {
     'html': 'html',
@@ -21,40 +21,6 @@ const OUTPUT_COMPILED_FORMATS = [
 let _nextID = 0;
 
 let _question_views = {};
-
-// A standard fetch to the API that understands how information and errors are passed.
-async function api_get(endpoint, params = {}) {
-    let url = new URL(endpoint, window.location.origin);
-
-    for (const [key, value] of Object.entries(params)) {
-        url.searchParams.set(key, value);
-    }
-
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-        if (response.status === 400) {
-            const body = await response.json();
-            console.error(body);
-        } else {
-            console.error("Unknown error when fetching question.");
-        }
-
-        console.error(response);
-        throw new Error(`Failed to get question: '${path}'.`);
-    }
-
-    return await response.json();
-}
-
-async function fetch_question(path) {
-    const body = await api_get(API_ENDPOINT_QUESTION_FETCH, {'path': path});
-    return body.question;
-}
-
-async function compile_question(path, format) {
-    const body = await api_get(API_ENDPOINT_QUESTION_COMPILE, {'path': path, 'format': format});
-    return body.content;
-}
 
 async function render_question_code_input(id, path, parentElement) {
     const question = await fetch_question(path);
@@ -173,93 +139,6 @@ async function render_question(path) {
 
     render_question_compiled_output(_nextID++, path, 'html', container);
     render_question_compiled_output(_nextID++, path, 'pdf', container);
-}
-
-function main() {
-    // TEST
-    console.log("TEST - main");
-
-    const TEST_PATH = 'questions/ice-breaker/question.json';
-    // TEST
-    // render_question(TEST_PATH);
-
-    let layoutConfig = {
-        content: [
-            {
-                type: 'row',
-                content:[
-                    {
-                        type: 'component',
-                        componentName: 'question-view',
-                        componentState: {
-                            path: TEST_PATH,
-                            type: 'input',
-                        }
-                    },
-                    {
-                        type: 'column',
-                        content:[
-                            {
-                                type: 'component',
-                                componentName: 'question-view',
-                                componentState: {
-                                    path: TEST_PATH,
-                                    type: 'output-code',
-                                    format: 'html',
-                                }
-                            },
-                            {
-                                type: 'component',
-                                componentName: 'question-view',
-                                componentState: {
-                                    path: TEST_PATH,
-                                    type: 'output-compiled',
-                                    format: 'html',
-                                }
-                            },
-                        ]
-                    },
-                    {
-                        type: 'column',
-                        content:[
-                            {
-                                type: 'component',
-                                componentName: 'question-view',
-                                componentState: {
-                                    path: TEST_PATH,
-                                    type: 'output-code',
-                                    format: 'tex',
-                                }
-                            },
-                            {
-                                type: 'component',
-                                componentName: 'question-view',
-                                componentState: {
-                                    path: TEST_PATH,
-                                    type: 'output-compiled',
-                                    format: 'pdf',
-                                }
-                            },
-                        ]
-                    },
-                ]
-            }
-        ]
-    };
-
-    let editArea = document.querySelector('.test-area');
-
-    let layout = new GoldenLayout(layoutConfig, editArea);
-    layout.registerComponent('question-view', createQuestionView);
-
-    const observer = new ResizeObserver(function(entries) {
-        let height = entries[0].contentRect.height;
-        let width = entries[0].contentRect.width;
-        layout.updateSize(width, height);
-    });
-    observer.observe(editArea);
-
-    layout.init();
 }
 
 function createQuestionView(container, params) {

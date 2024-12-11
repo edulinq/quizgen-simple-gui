@@ -10,7 +10,7 @@ def run_cli(base_dir = None, port = None, **kwargs):
     if (not os.path.isdir(base_dir)):
         raise ValueError("Project directory '%s' does not exist or is not a directory." % (base_dir))
 
-    qgg.server.start(base_dir, port = port)
+    qgg.server.run(base_dir, port = port)
     return 0
 
 def main():

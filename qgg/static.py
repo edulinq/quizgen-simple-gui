@@ -4,7 +4,8 @@ import mimetypes
 import os
 
 THIS_DIR = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-FILES_DIR = os.path.join(THIS_DIR, 'files')
+ROOT_DIR = os.path.join(THIS_DIR, '..')
+STATIC_DIR = os.path.join(ROOT_DIR, 'static')
 INDEX_FILENAME = 'index.html'
 
 PREFIX = '/static'
@@ -25,7 +26,7 @@ def handle(path, project_dir, **kwargs):
     return _handle_file(path)
 
 def _handle_file(relpath):
-    path = os.path.join(FILES_DIR, relpath)
+    path = os.path.join(STATIC_DIR, relpath)
     if (not os.path.isfile(path)):
         logging.warning("Found no matching static file for '%s'." % (path))
         return http.HTTPStatus.NOT_FOUND, None, ''

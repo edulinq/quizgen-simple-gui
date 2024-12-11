@@ -3,15 +3,23 @@ import http
 import logging
 import os
 
-import qgg.util
-
 DIRENT_TYPE_FILE = 'file'
 DIRENT_TYPE_DIR = 'dir'
 
+# TEST
 ENCODING = 'utf-8'
 
+# TEST
+def fetch(handler, path, **kwargs):
+    # TEST
+    print("TEST")
+
+    return None, None, None
+
 def fetch_dirent_handler(api_path, project_dir, path = '', **kwargs):
-    path, error_info = qgg.util.get_request_relpath(project_dir, path)
+    # TEST
+    raise ValueError("TEST - This needs changes")
+    path, error_info = get_request_relpath(project_dir, path)
     if (error_info is not None):
         return error_info
 
@@ -21,6 +29,7 @@ def fetch_dirent_handler(api_path, project_dir, path = '', **kwargs):
     with open(path, 'rb') as file:
         contents = file.read()
 
+    # TEST
     text_contents = base64.standard_b64encode(contents).decode(ENCODING)
     payload = {
         'size': len(contents),
@@ -59,3 +68,21 @@ def _get_dirents(base_dir, recursive = True):
             dirents.append(data)
 
     return dirents
+
+def get_request_relpath(project_dir, relpath):
+    """
+    On success, returns: abs_path, None
+    On failure, returns: None, (status, headers, payload)
+    """
+
+    relpath = relpath.strip()
+    if (relpath == ''):
+        return None, (http.HTTPStatus.BAD_REQUEST, None, {"message": "No path provided."})
+
+    path = os.path.abspath(os.path.join(project_dir, relpath))
+    if (not os.path.exists(path)):
+        message = "Path does not exist within project: '%s'." % (relpath)
+        logging.info(message + " Real Path: '%s'." % (path))
+        return None, (http.HTTPStatus.BAD_REQUEST, None, {"message": message})
+
+    return path, None
