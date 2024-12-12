@@ -1,88 +1,59 @@
-import base64
 import http
-import logging
+import mimetypes
 import os
 
-DIRENT_TYPE_FILE = 'file'
-DIRENT_TYPE_DIR = 'dir'
+import quizgen.project
 
-# TEST
-ENCODING = 'utf-8'
+import qgg.util.dirent
+import qgg.util.file
 
-# TEST
-def fetch(handler, path, **kwargs):
-    # TEST
-    print("TEST")
-
-    return None, None, None
-
-def fetch_dirent_handler(api_path, project_dir, path = '', **kwargs):
-    # TEST
-    raise ValueError("TEST - This needs changes")
-    path, error_info = get_request_relpath(project_dir, path)
-    if (error_info is not None):
-        return error_info
-
-    if (not os.path.isfile(path)):
-        return None, None, _get_dirents(path, recursive = False)
-
-    with open(path, 'rb') as file:
-        contents = file.read()
-
-    # TEST
-    text_contents = base64.standard_b64encode(contents).decode(ENCODING)
-    payload = {
-        'size': len(contents),
-        'contents': text_contents,
+def fetch(handler, path, project_dir, **kwargs):
+    data = {
+        'project': quizgen.project.Project.from_path(project_dir).to_pod(),
+        'tree': qgg.util.dirent.tree(project_dir),
+        'dirname': os.path.basename(project_dir),
     }
 
-    return None, None, payload
+    return data, None, None
 
-def fetch_handler(api_path, project_dir, **kwargs):
-    project = {
-        "dirents": _get_dirents(project_dir),
+def fetch_file(handler, path, project_dir, relpath = None, **kwargs):
+    if (relpath is None):
+        return "Missing 'relpath'.", http.HTTPStatus.BAD_REQUEST, None
+
+    file_path = _resolve_relpath(project_dir, relpath)
+
+    if (not os.path.exists(file_path)):
+        return "Relative path '%s' does not exist." % (relpath), http.HTTPStatus.BAD_REQUEST, None
+
+    if (not os.path.isfile(file_path)):
+        return "Relative path '%s' is not a file." % (relpath), http.HTTPStatus.BAD_REQUEST, None
+
+    data = {
+        'content': qgg.util.file.to_base64(file_path),
     }
 
-    return None, None, project
+    return _create_api_file(file_path), None, None
 
-def _get_dirents(base_dir, recursive = True):
-    dirents = []
-
-    for dirent in sorted(os.listdir(base_dir)):
-        path = os.path.join(base_dir, dirent)
-
-        if (os.path.isfile(path)):
-            dirents.append({
-                'type': DIRENT_TYPE_FILE,
-                'name': dirent,
-            })
-        else:
-            data = {
-                'type': DIRENT_TYPE_DIR,
-                'name': dirent,
-            }
-
-            if (recursive):
-                data['dirents'] = _get_dirents(path)
-
-            dirents.append(data)
-
-    return dirents
-
-def get_request_relpath(project_dir, relpath):
+def _resolve_relpath(project_dir, relpath):
     """
-    On success, returns: abs_path, None
-    On failure, returns: None, (status, headers, payload)
+    Resolve the relative path (which has URL-style path separators ('/')) to an abs path.
     """
 
-    relpath = relpath.strip()
-    if (relpath == ''):
-        return None, (http.HTTPStatus.BAD_REQUEST, None, {"message": "No path provided."})
+    relpath = relpath.strip().removeprefix('/')
 
-    path = os.path.abspath(os.path.join(project_dir, relpath))
-    if (not os.path.exists(path)):
-        message = "Path does not exist within project: '%s'." % (relpath)
-        logging.info(message + " Real Path: '%s'." % (path))
-        return None, (http.HTTPStatus.BAD_REQUEST, None, {"message": message})
+    # Split on URL-style path separators and replace with system ones.
+    # Note that dirent names with '/' are not allowed.
+    relpath = os.sep.join(relpath.split('/'))
 
-    return path, None
+    return os.path.abspath(os.path.join(project_dir, relpath))
+
+def _create_api_file(path):
+    content = qgg.util.file.to_base64(path)
+    mime, _ = mimetypes.guess_type(path)
+    filename = os.path.basename(path)
+
+    return {
+        'content': content,
+        'mime': mime,
+        'filename': filename,
+    }

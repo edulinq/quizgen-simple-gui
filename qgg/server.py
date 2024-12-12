@@ -24,9 +24,9 @@ ROUTES = [
     (r'^/js/', qgg.handlers.rewrite_prefix('^/js/', '/static/js/')),
 
     qgg.common.build_api_route('project/fetch', qgg.project.fetch),
+    qgg.common.build_api_route('project/file/fetch', qgg.project.fetch_file),
     # TEST
     # qgg.common.build_api_route('project/save', qgg.project.fetch),
-    # qgg.common.build_api_route('project/dirent/fetch', qgg.project.fetch),
 ]
 
 ''' TEST
@@ -58,6 +58,10 @@ class _handler(http.server.BaseHTTPRequestHandler):
 
     @classmethod
     def init(cls, project_dir, **kwargs):
+        project_dir = os.path.abspath(project_dir)
+        if (not os.path.isdir(project_dir)):
+            raise ValueError('Project directory is not a directory or does not exist.')
+
         cls._project_dir = project_dir
 
     def log_message(self, format, *args):
@@ -141,9 +145,7 @@ class _handler(http.server.BaseHTTPRequestHandler):
                 break
 
         try:
-            return target(self, path,
-                    project_dir = _handler._project_dir,
-                    **params)
+            return target(self, path, _handler._project_dir, **params)
         except Exception as ex:
             logging.error("Error on path '%s', handler '%s'.", path, str(target), exc_info = ex)
             return str(ex), http.HTTPStatus.INTERNAL_SERVER_ERROR, None
@@ -168,11 +170,6 @@ class _handler(http.server.BaseHTTPRequestHandler):
     def _get_post_data(self):
         length = int(self.headers['Content-Length'])
         payload = self.rfile.read(length).decode(qgg.common.ENCODING)
-
-        # TEST
-        print('---')
-        print(payload)
-        print('---')
 
         try:
             request = json.loads(payload)

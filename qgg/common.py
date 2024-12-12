@@ -54,10 +54,6 @@ def build_api_route(endpoint, handler_func):
     regex = rf'^{API_PREFIX}/{endpoint}$'
     handler_func = wrap_api_handler(handler_func, endpoint)
 
-    # TEST
-    print('TEST')
-    print(regex)
-
     return (regex, handler_func)
 
 def wrap_api_handler(handler_func, endpoint):
@@ -67,14 +63,14 @@ def wrap_api_handler(handler_func, endpoint):
 
     return functools.partial(_call_api_handler, handler_func, endpoint)
 
-def _call_api_handler(handler_func, endpoint, handler, path, **kwargs):
+def _call_api_handler(handler_func, endpoint, handler, path, project_dir, **kwargs):
     payload = None
     code = http.HTTPStatus.OK
     headers = {}
     message = None
 
     try:
-        result = handler_func(handler, path, **kwargs)
+        result = handler_func(handler, path, project_dir, **kwargs)
         if (result is None):
             return None
 
@@ -89,10 +85,19 @@ def _call_api_handler(handler_func, endpoint, handler, path, **kwargs):
     if (code is None):
         code = http.HTTPStatus.OK
 
+    # API functions can send a message in the payload spot if the code is not OK.
+    if ((code != http.HTTPStatus.OK) and (isinstance(payload, str))):
+        message = payload
+        payload = None
+
     if (headers is None):
         headers = {}
 
     payload = wrap_api_response(payload, code, endpoint, message = message)
+
+    # At this point, mark in the header that the full body should be read.
+    # Some errors may not have a JSON body, but we have full content that may have a message.
+    headers['qgg-body'] = True
 
     return payload, code, headers
 

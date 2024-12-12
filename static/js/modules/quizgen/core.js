@@ -1,19 +1,15 @@
 const API_VESION = 'v01';
 
 async function resolveAPIResponse(response) {
-    // TEST
-    console.debug(response);
+    // Check if we should read the full body.
+    let readBody = response.headers.get('qgg-body') ?? false;
 
-    if (!response.ok) {
+    if (!response.ok && !readBody) {
         console.error("API returned an error.", response);
         return Promise.reject('QuizGen API returned an error.');
     }
 
     let body = await response.json();
-
-    // TEST
-    console.log(body);
-
     if (!body.success) {
         return Promise.reject(`QuizGen API call failed: '${body.message}'.`);
     }
