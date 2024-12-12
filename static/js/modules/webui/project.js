@@ -1,4 +1,5 @@
 import * as Common from './common.js'
+import * as Layout from './layout.js'
 import * as Log from './log.js'
 import * as Render from './render.js'
 
@@ -41,10 +42,7 @@ function loadFile(relpath) {
 }
 
 function openEditor(relpath, result) {
-    // TEST
-    let container = document.querySelector('.page .editor-area');
-
-    Render.file(container, result.filename, result.mime, result.content);
+    Layout.open(result.filename, result.mime, result.content, false);
 }
 
 function handleFileClick(event, node, path) {

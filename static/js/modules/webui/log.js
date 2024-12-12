@@ -46,6 +46,11 @@ function log(level, message, context = {}, notify = false) {
         console.error(record);
     }
 
+    if (message && message.stack && message.message) {
+        // Explicitly log errors to get out all the info.
+        console.log(message);
+    }
+
     if (notify) {
         alert(message);
     }
