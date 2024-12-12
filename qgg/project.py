@@ -29,6 +29,7 @@ def fetch_file(handler, path, project_dir, relpath = None, **kwargs):
         return "Relative path '%s' is not a file." % (relpath), http.HTTPStatus.BAD_REQUEST, None
 
     data = {
+        'relpath': relpath,
         'content': qgg.util.file.to_base64(file_path),
     }
 

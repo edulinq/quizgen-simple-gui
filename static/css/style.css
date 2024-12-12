@@ -49,6 +49,23 @@ html {
     flex: 1;
     overflow: hidden;
     padding: 0.1em;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 0.5em;
+}
+
+.work-area .editor {
+    flex: 1;
+}
+
+.editor-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 1em;
 }
 
 /* File Tree - BEGIN */

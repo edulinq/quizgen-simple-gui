@@ -1,5 +1,5 @@
 import * as Common from './common.js'
-import * as Layout from './layout.js'
+import * as Editor from './editor.js'
 import * as Log from './log.js'
 import * as Render from './render.js'
 
@@ -26,7 +26,7 @@ function load() {
 }
 
 function loadFile(relpath) {
-    Common.loadingStart('.page .editor-area');
+    Common.loadingStart('.editor-area');
 
     QuizGen.Project.fetchFile(relpath)
         .then(function(result) {
@@ -36,13 +36,13 @@ function loadFile(relpath) {
             Log.error(result);
         })
         .finally(function() {
-            Common.loadingStop('.page .editor-area');
+            Common.loadingStop('.editor-area');
         })
     ;
 }
 
 function openEditor(relpath, result) {
-    Layout.open(result.filename, result.mime, result.content, false);
+    Editor.open(relpath, result.filename, result.mime, result.content, 'input', false);
 }
 
 function handleFileClick(event, node, path) {

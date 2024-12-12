@@ -1,4 +1,4 @@
-import * as Layout from './layout.js'
+import * as Editor from './editor.js'
 import * as Log from './log.js'
 import * as Project from './project.js'
 import * as Util from './util.js'
@@ -11,7 +11,7 @@ function init() {
     Util.init();
 
     Project.init();
-    Layout.init();
+    Editor.init();
 
     Project.load();
 }
