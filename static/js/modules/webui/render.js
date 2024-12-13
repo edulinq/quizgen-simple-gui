@@ -84,9 +84,9 @@ function dataURL(mime, contentB64) {
     return `data:${mime};base64,${contentB64}`;
 }
 
-function fileTree(container, root, fileClickHandler = undefined, dirClickHandler = expandDir) {
+function fileTree(container, tree, fileClickHandler = undefined, dirClickHandler = expandDir) {
     container.classList.add('file-tree');
-    let lines = fileTreeNode(root, '');
+    let lines = fileTreeNode(tree);
     container.innerHTML = lines.join("\n");
 
     // Register click handlers (double for files, single for dirs).
@@ -101,35 +101,33 @@ function fileTree(container, root, fileClickHandler = undefined, dirClickHandler
                 // Reguster double clck.
                 node.ondblclick = function(event) {
                     event.stopPropagation();
-                    fileClickHandler(event, node, node.dataset.path);
+                    fileClickHandler(event, node, node.dataset.relpath);
                 };
             }
         } else {
             if (dirClickHandler !== undefined) {
                 node.onclick = function(event) {
                     event.stopPropagation();
-                    dirClickHandler(event, node, node.dataset.path);
+                    dirClickHandler(event, node, node.dataset.relpath);
                 };
             }
         }
     }
 }
 
-function fileTreeNode(root, basePath, lines = []) {
-    if (Object.keys(root).length === 0) {
+function fileTreeNode(root, lines = []) {
+    if ((root === undefined) || (Object.keys(root).length === 0)) {
         return lines;
     }
 
-    lines.push(`<ul class='file-tree-dirents' data-path='${basePath}'>`);
+    lines.push(`<ul class='file-tree-dirents' data-relpath='${root.relpath}'>`);
 
-    for (const [key, value] of Object.entries(root)) {
-        let path = `${basePath}/${key}`;
-
-        if (value === null) {
-            lines.push(`<li class='file-tree-dirent file-tree-file' data-path='${path}'><span>${key}</span></li>`)
+    for (const node of root.dirents) {
+        if (node.type === 'file') {
+            lines.push(`<li class='file-tree-dirent file-tree-file' data-relpath='${node.relpath}'><span>${node.name}</span></li>`)
         } else {
-            lines.push(`<li class='file-tree-dirent file-tree-dir' data-path='${path}'><span>${key}</span>`)
-            fileTreeNode(value, path, lines);
+            lines.push(`<li class='file-tree-dirent file-tree-dir' data-relpath='${node.relpath}'><span>${node.name}</span>`)
+            fileTreeNode(node, lines);
             lines.push(`</li>`);
         }
     }

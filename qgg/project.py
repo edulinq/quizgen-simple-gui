@@ -8,9 +8,12 @@ import qgg.util.dirent
 import qgg.util.file
 
 def fetch(handler, path, project_dir, **kwargs):
+    tree = qgg.util.dirent.tree(project_dir)
+    _augment_tree(tree)
+
     data = {
         'project': quizgen.project.Project.from_path(project_dir).to_pod(),
-        'tree': qgg.util.dirent.tree(project_dir),
+        'tree': tree,
         'dirname': os.path.basename(project_dir),
     }
 
@@ -58,3 +61,21 @@ def _create_api_file(path):
         'mime': mime,
         'filename': filename,
     }
+
+def _augment_tree(root, base_dir = None):
+    """
+    Augment the basic file tree with project/quizgen information.
+    """
+
+    if (root is None):
+        return root
+
+    relpath = root['name']
+    if (base_dir is not None):
+        # relpaths use URL-style path separators.
+        relpath = f"{base_dir}/{relpath}"
+
+    root['relpath'] = relpath
+
+    for dirent in root.get('dirents', []):
+        _augment_tree(dirent, relpath)

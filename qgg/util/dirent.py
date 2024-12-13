@@ -4,19 +4,36 @@ def tree(base_dir):
     """
     Create a file tree by recursively descending a file structure.
     Tree nodes will be dicts where keys are dirent names and the value
-    is None for files and another tree node for dirs.
+    is a dict.
     """
 
-    root = {}
+    return {
+        'type': 'dir',
+        'root': True,
+        'name': '',
+        'dirents': _tree_dirents(base_dir),
+    }
+
+def _tree_dirents(base_dir):
+    dirents = []
 
     for dirent in os.listdir(base_dir):
         if ('/' in dirent):
             raise ValueError('File/Dir names cannot have a slash in them. Found "%s".' % (dirent))
 
         path = os.path.join(base_dir, dirent)
-        if (os.path.isdir(path)):
-            root[dirent] = tree(path)
-        else:
-            root[dirent] = None
 
-    return root
+        if (os.path.isdir(path)):
+            dirents.append({
+                'type': 'dir',
+                'root': False,
+                'name': dirent,
+                'dirents': _tree_dirents(path),
+            })
+        else:
+            dirents.append({
+                'type': 'file',
+                'name': dirent,
+            })
+
+    return dirents
