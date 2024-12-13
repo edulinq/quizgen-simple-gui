@@ -3,13 +3,14 @@ import mimetypes
 import os
 
 import quizgen.project
+import quizgen.util.json
 
 import qgg.util.dirent
 import qgg.util.file
 
 def fetch(handler, path, project_dir, **kwargs):
     tree = qgg.util.dirent.tree(project_dir)
-    _augment_tree(tree)
+    _augment_tree(tree, project_dir)
 
     data = {
         'project': quizgen.project.Project.from_path(project_dir).to_pod(),
@@ -62,7 +63,7 @@ def _create_api_file(path):
         'filename': filename,
     }
 
-def _augment_tree(root, base_dir = None):
+def _augment_tree(root, parent_real_path, parent_relpath = None):
     """
     Augment the basic file tree with project/quizgen information.
     """
@@ -70,12 +71,36 @@ def _augment_tree(root, base_dir = None):
     if (root is None):
         return root
 
+    real_path = os.path.join(parent_real_path, root['name'])
+
     relpath = root['name']
-    if (base_dir is not None):
+    if (parent_relpath is not None):
         # relpaths use URL-style path separators.
-        relpath = f"{base_dir}/{relpath}"
+        relpath = f"{parent_relpath}/{relpath}"
 
     root['relpath'] = relpath
 
+    # If this is a file, check its type and return.
+    if (root['type'] == 'file'):
+        if (root['name'].lower().endswith('.json')):
+            data = quizgen.util.json.load_path(real_path)
+            root['object_type'] = data.get('type', None)
+
+        return
+
+    # A compile target is the quiz/question that should be compiled
+    # when this dirent is selected and the compile button is pressed.
+    compile_target = None
+
     for dirent in root.get('dirents', []):
-        _augment_tree(dirent, relpath)
+        _augment_tree(dirent, real_path, relpath)
+
+        # Now that this dirent has been aurmented, check if it is a compile target.
+        if (dirent.get('object_type') in ['quiz', 'question']):
+            compile_target = dirent['relpath']
+
+    # If we have a compile target, set that to be the target for each file in this dir.
+    if (compile_target is not None):
+        for dirent in root.get('dirents', []):
+            if (dirent['type'] == 'file'):
+                dirent['compile_target'] = compile_target

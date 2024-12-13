@@ -1,4 +1,4 @@
-eq-quizgen>=0.2.8
+eq-quizgen>=0.3.0
 
 build
 packaging>=21.3
