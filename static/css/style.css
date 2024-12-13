@@ -100,6 +100,14 @@ html {
     list-style-type: '🗎 '
 }
 
+.file-tree .file-tree-file.file-tree-file-image {
+    list-style-type: '🖻 '
+}
+
+.file-tree .file-tree-file.file-tree-file-application[data-mime='application/pdf'] {
+    list-style-type: '🖺 '
+}
+
 /* File Tree - END */
 
 /* Code Editor - BEGIN */
@@ -108,6 +116,10 @@ html {
     position: relative;
     width: 100%;
     height: 100%;
+}
+
+.file img {
+    max-width: 100%;
 }
 
 .file object,

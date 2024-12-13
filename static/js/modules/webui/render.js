@@ -21,18 +21,13 @@ const EXTENSION_TO_ACE_MODE = {
 
 let _nextID = 0;
 
-function file(parentContainer, filename, mime, contentB64, readonly) {
-    mime = mime ?? '???';
+function file(parentContainer, filename, rawMime, contentB64, readonly) {
+    const [mime, classMime, mimePrefix] = parseMime(rawMime);
 
     let container = document.createElement('div');
     container.id = `file-${String(_nextID++).padStart(3, '0')}`;
-    container.classList.add('file', `file-${mime.replace('/', '_')}`);
+    container.classList.add('file', `file-${classMime}`);
     parentContainer.appendChild(container);
-
-    let mimePrefix = undefined;
-    if (mime !== null) {
-        mimePrefix = mime.split('/')[0];
-    }
 
     if (MIME_PREFIX_CODE.includes(mimePrefix) || MIME_CODE.includes(mime)) {
         let text = (new TextDecoder('utf-8')).decode(Uint8Array.fromBase64(contentB64));
@@ -50,6 +45,15 @@ function file(parentContainer, filename, mime, contentB64, readonly) {
     }
 
     container.innerHTML = html;
+}
+
+function parseMime(mime) {
+    mime = mime ?? 'unknown'
+
+    let classMime = mime.replace('/', '_');
+    let mimePrefix = mime.split('/')[0];
+
+    return [mime, classMime, mimePrefix];
 }
 
 function codeEditor(container, filename, mime, text, readonly) {
@@ -124,7 +128,8 @@ function fileTreeNode(root, lines = []) {
 
     for (const node of root.dirents) {
         if (node.type === 'file') {
-            lines.push(`<li class='file-tree-dirent file-tree-file' data-relpath='${node.relpath}'><span>${node.name}</span></li>`)
+            const [mime, classMime, mimePrefix] = parseMime(node.mime);
+            lines.push(`<li class='file-tree-dirent file-tree-file file-tree-file-${mimePrefix}' data-mime='${mime}' data-relpath='${node.relpath}'><span>${node.name}</span></li>`)
         } else {
             lines.push(`<li class='file-tree-dirent file-tree-dir' data-relpath='${node.relpath}'><span>${node.name}</span>`)
             fileTreeNode(node, lines);

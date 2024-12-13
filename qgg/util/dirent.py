@@ -1,3 +1,4 @@
+import mimetypes
 import os
 
 def tree(base_dir):
@@ -31,9 +32,11 @@ def _tree_dirents(base_dir):
                 'dirents': _tree_dirents(path),
             })
         else:
+            mime, _ = mimetypes.guess_type(path)
             dirents.append({
                 'type': 'file',
                 'name': dirent,
+                'mime': mime,
             })
 
     return dirents
