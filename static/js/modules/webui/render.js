@@ -21,13 +21,20 @@ const EXTENSION_TO_ACE_MODE = {
 
 let _nextID = 0;
 
-function file(parentContainer, filename, rawMime, contentB64, readonly) {
+function file(parentContainer, relpath, filename, rawMime, contentB64, readonly, clickCallback = undefined) {
     const [mime, classMime, mimePrefix] = parseMime(rawMime);
 
     let container = document.createElement('div');
     container.id = `file-${String(_nextID++).padStart(3, '0')}`;
     container.classList.add('file', `file-${classMime}`);
     parentContainer.appendChild(container);
+
+    // Keep track of when the tab was clicked to see which tab has use of the controls.
+    if (clickCallback !== undefined) {
+        container.addEventListener('click', function(event) {
+            clickCallback(relpath);
+        });
+    }
 
     if (MIME_PREFIX_CODE.includes(mimePrefix) || MIME_CODE.includes(mime)) {
         let text = (new TextDecoder('utf-8')).decode(Uint8Array.fromBase64(contentB64));
@@ -103,17 +110,17 @@ function fileTree(container, tree, fileClickHandler = undefined, dirClickHandler
 
             if (fileClickHandler !== undefined) {
                 // Reguster double clck.
-                node.ondblclick = function(event) {
+                node.addEventListener('dblclick', function(event) {
                     event.stopPropagation();
                     fileClickHandler(event, node, node.dataset.relpath);
-                };
+                });
             }
         } else {
             if (dirClickHandler !== undefined) {
-                node.onclick = function(event) {
+                node.addEventListener('click', function(event) {
                     event.stopPropagation();
                     dirClickHandler(event, node, node.dataset.relpath);
-                };
+                });
             }
         }
     }

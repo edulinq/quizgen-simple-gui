@@ -15,6 +15,7 @@ const OUTPUT_FORMATS = [
 
 let _layout = undefined;
 let _activeFiles = {};
+let _selected_relpath = undefined;
 
 function init() {
     initControls()
@@ -38,14 +39,14 @@ function initControls() {
 
     // Register handlers.
 
-    container.querySelector('.save').onclick = function(event) {
+    container.querySelector('.save').addEventListener('click', function(event) {
         save();
-    };
+    });
 
-    container.querySelector('.compile').onclick = function(event) {
+    container.querySelector('.compile').addEventListener('click', function(event) {
         let format = container.querySelector('.format').value;
         compile(format);
-    };
+    });
 }
 
 function save() {
@@ -53,7 +54,7 @@ function save() {
     console.log("TEST - SAVE");
 
     // TEST
-    // layout.selectedItem
+    // _selected_relpath
 }
 
 function compile(format) {
@@ -61,13 +62,12 @@ function compile(format) {
     console.log("TEST - compile ", format);
 
     // TEST
-    // layout.selectedItem
+    // _selected_relpath
 }
 
 function initLayout() {
     let emptyConfig = {
         settings: {
-            selectionEnabled: true,
             showPopoutIcon: false,
             showMaximiseIcon: false,
             showCloseIcon: false,
@@ -102,18 +102,57 @@ function createEditorTab(component, params) {
     }
 
     let container = component.getElement()[0];
-    Render.file(container, params.filename, params.mime, params.contentB64, params.readonly);
+    Render.file(container, params.relpath, params.filename, params.mime, params.contentB64, params.readonly, selectTab);
 
+    // Keep track of when the tab is closed.
     component.on('destroy', function() {
         tabClosed(params.relpath, params.purpose);
     });
 
+    // Set this tab active when the header is clicked.
+    component.on('tab', function(tab) {
+        tab.element[0].addEventListener('click', function(event) {
+            selectTab(params.relpath);
+        });
+    });
+
     _activeFiles[params.relpath] = _activeFiles[params.relpath] ?? {};
     _activeFiles[params.relpath][params.purpose] = component;
+    selectTab(params.relpath);
 }
 
 function tabClosed(relpath, purpose) {
     delete _activeFiles[relpath][purpose]
+
+    if (relpath == _selected_relpath) {
+        clearSelectedTab();
+    }
+}
+
+function clearSelectedTab() {
+    _selected_relpath = undefined;
+
+    let controlLabel = document.querySelector('.editor-controls .selected-relpath');
+    if (controlLabel) {
+        controlLabel.remove();
+    }
+}
+
+function selectTab(relpath) {
+    if (relpath === undefined) {
+        return;
+    }
+
+    if (_selected_relpath === relpath) {
+        return;
+    }
+
+    clearSelectedTab();
+
+    _selected_relpath = relpath;
+    document.querySelector('.editor-controls').insertAdjacentHTML('beforeend', `
+        <span class='selected-relpath'>${relpath}</span>
+    `);
 }
 
 function open(relpath, filename, mime, contentB64, purpose, readonly) {
