@@ -25,21 +25,8 @@ ROUTES = [
 
     qgg.common.build_api_route('project/fetch', qgg.project.fetch),
     qgg.common.build_api_route('project/file/fetch', qgg.project.fetch_file),
-    # TEST
-    # qgg.common.build_api_route('project/save', qgg.project.fetch),
+    qgg.common.build_api_route('project/file/save', qgg.project.save_file),
 ]
-
-''' TEST
-(rf'^{qgg.common.API_PREFIX}/project/dirent/fetch$', qgg.common.wrap_api_handler(qgg.project.fetch)),
-(rf'^{qgg.common.API_PREFIX}/project/fetch$', qgg.common.wrap_api_handler(qgg.project.fetch)),
-(rf'^{qgg.common.API_PREFIX}/project/save$', qgg.common.wrap_api_handler(qgg.project.save)),
-'''
-
-''' TEST
-(r'^/api/v1/question/fetch$', qgg.question.fetch_handler),
-(r'^/api/v1/question/compile$', qgg.question.compile_handler),
-(r'^/api/v1/question/compile/pdf$', qgg.question.compile_pdf_handler),
-'''
 
 def run(project_dir, port = DEFAULT_PORT):
     if (not os.path.isdir(project_dir)):

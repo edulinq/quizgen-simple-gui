@@ -15,7 +15,18 @@ function fetchFile(relpath) {
     });
 }
 
+function saveFile(relpath, contentB64) {
+    return Core.sendRequest({
+        endpoint: 'project/file/save',
+        payload: {
+            'relpath': relpath,
+            'content': contentB64,
+        },
+    });
+}
+
 export {
     fetch,
     fetchFile,
+    saveFile,
 }

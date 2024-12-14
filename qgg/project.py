@@ -21,6 +21,34 @@ def fetch(handler, path, project_dir, **kwargs):
     return data, None, None
 
 def fetch_file(handler, path, project_dir, relpath = None, **kwargs):
+    file_path = _rel_file_check(project_dir, relpath)
+    if (not isinstance(file_path, str)):
+        return file_path
+
+    return _create_api_file(file_path, relpath), None, None
+
+def save_file(handler, path, project_dir, relpath = None, content = None, **kwargs):
+    file_path = _rel_file_check(project_dir, relpath)
+    if (not isinstance(file_path, str)):
+        return file_path
+
+    if (content is None):
+        return "Missing 'content'.", http.HTTPStatus.BAD_REQUEST, None
+
+    qgg.util.file.from_base64(content, file_path)
+
+    data = {
+        'relpath': relpath,
+    }
+
+    return data, None, None
+
+def _rel_file_check(project_dir, relpath):
+    """
+    Standard checks for a relpath thay points to a file.
+    Returns the resolved path on sucess, or a standard HTTP result tuple on failure.
+    """
+
     if (relpath is None):
         return "Missing 'relpath'.", http.HTTPStatus.BAD_REQUEST, None
 
@@ -32,12 +60,7 @@ def fetch_file(handler, path, project_dir, relpath = None, **kwargs):
     if (not os.path.isfile(file_path)):
         return "Relative path '%s' is not a file." % (relpath), http.HTTPStatus.BAD_REQUEST, None
 
-    data = {
-        'relpath': relpath,
-        'content': qgg.util.file.to_base64(file_path),
-    }
-
-    return _create_api_file(file_path), None, None
+    return file_path
 
 def _resolve_relpath(project_dir, relpath):
     """
@@ -52,12 +75,13 @@ def _resolve_relpath(project_dir, relpath):
 
     return os.path.abspath(os.path.join(project_dir, relpath))
 
-def _create_api_file(path):
+def _create_api_file(path, relpath):
     content = qgg.util.file.to_base64(path)
     mime, _ = mimetypes.guess_type(path)
     filename = os.path.basename(path)
 
     return {
+        'relpath': relpath,
         'content': content,
         'mime': mime,
         'filename': filename,

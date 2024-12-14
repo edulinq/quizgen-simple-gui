@@ -2,6 +2,8 @@
  * Low level rendering to DOM elements.
 */
 
+import * as Util from './util.js'
+
 const MIME_PREFIX_IMG = ['image'];
 const MIME_IMG = [];
 
@@ -41,8 +43,8 @@ function file(parentContainer, relpath, filename, rawMime, contentB64, readonly,
     }
 
     if (MIME_PREFIX_CODE.includes(mimePrefix) || MIME_CODE.includes(mime)) {
-        let text = (new TextDecoder('utf-8')).decode(Uint8Array.fromBase64(contentB64));
-        codeEditor(container, filename, mime, text, readonly);
+        let text = Util.b64StringToText(contentB64);
+        codeEditor(relpath, container, filename, mime, text, readonly);
         return true;
     }
 
@@ -68,7 +70,7 @@ function parseMime(mime) {
     return [mime, classMime, mimePrefix];
 }
 
-function codeEditor(container, filename, mime, text, readonly) {
+function codeEditor(relpath, container, filename, mime, text, readonly) {
     let extension = filename.split('.').pop();
     let mode = EXTENSION_TO_ACE_MODE[extension] ?? DEFAULT_ACE_MODE;
 
@@ -94,6 +96,10 @@ function codeEditor(container, filename, mime, text, readonly) {
         'highlightSelectedWord': false,
         'readOnly': readonly,
     });
+
+    container.qgg = {
+        editor: editor,
+    };
 }
 
 function dataURL(mime, contentB64) {

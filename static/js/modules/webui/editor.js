@@ -2,8 +2,12 @@
  * Control and layout of file editing.
  */
 
+import * as Common from './common.js'
 import * as Render from './render.js'
 import * as Log from './log.js'
+import * as Util from './util.js'
+
+import * as QuizGen from '/js/modules/quizgen/base.js'
 
 const OUTPUT_FORMATS = [
     'html (raw)',
@@ -101,19 +105,44 @@ function setProject(projectInfo, tree) {
 }
 
 function save() {
-    // TEST
-    console.log("TEST - SAVE: ", _selectedRelpath);
+    let relpath = _selectedRelpath;
+    if (!relpath) {
+        return;
+    }
 
-    // TEST
-    // _selectedRelpath
+    // Get the selected input tab.
+    let tab = _activeFiles[relpath]?.[PURPOSE_INPUT];
+    if (!tab) {
+        return;
+    }
+
+    let element = document.querySelector(`.file.code-editor[data-relpath='${relpath}']`);
+    if (!element) {
+        Log.warn(`Could not find editor for '${relpath}'.`);
+        return;
+    }
+
+    let text = element.qgg.editor.getValue();
+    let contentB64 = Util.textTob64String(text);
+
+    Common.loadingStart();
+
+    QuizGen.Project.saveFile(relpath, contentB64)
+        .then(function(result) {
+            // TEST - Recompile all open output.
+        })
+        .catch(function(result) {
+            Log.error(result);
+        })
+        .finally(function() {
+            Common.loadingStop();
+        })
+    ;
 }
 
 function compile(format) {
     // TEST
     console.log("TEST - compile ", format, " : ", _selectedRelpath);
-
-    // TEST
-    // _selectedRelpath
 }
 
 function createEditorTab(component, params) {
