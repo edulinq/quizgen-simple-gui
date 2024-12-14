@@ -23,6 +23,7 @@ ROUTES = [
     (r'^/static/', qgg.handlers.static),
     (r'^/js/', qgg.handlers.rewrite_prefix('^/js/', '/static/js/')),
 
+    qgg.common.build_api_route('project/compile', qgg.project.compile),
     qgg.common.build_api_route('project/fetch', qgg.project.fetch),
     qgg.common.build_api_route('project/file/fetch', qgg.project.fetch_file),
     qgg.common.build_api_route('project/file/save', qgg.project.save_file),

@@ -1,5 +1,15 @@
 import * as Core from './core.js'
 
+function compile(relpath, format) {
+    return Core.sendRequest({
+        endpoint: 'project/compile',
+        payload: {
+            'relpath': relpath,
+            'format': format,
+        },
+    });
+}
+
 function fetch() {
     return Core.sendRequest({
         endpoint: 'project/fetch',
@@ -26,6 +36,7 @@ function saveFile(relpath, contentB64) {
 }
 
 export {
+    compile,
     fetch,
     fetchFile,
     saveFile,

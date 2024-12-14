@@ -9,15 +9,17 @@ import * as Util from './util.js'
 
 import * as QuizGen from '/js/modules/quizgen/base.js'
 
+// TODO: HTML (rendered)
+// TODO: PDF
 const OUTPUT_FORMATS = [
-    'html (raw)',
     'html',
-    'tex',
-    'pdf',
+    'canvas',
     'json',
+    'tex',
 ]
 
 const PURPOSE_INPUT = 'input';
+const PURPOSE_OUTPUT = 'output';
 
 let _layout = undefined;
 let _selectedRelpath = undefined;
@@ -141,8 +143,52 @@ function save() {
 }
 
 function compile(format) {
-    // TEST
-    console.log("TEST - compile ", format, " : ", _selectedRelpath);
+    let relpath = _selectedRelpath;
+    if (!relpath) {
+        return;
+    }
+
+    // Get the selected input tab.
+    let tab = _activeFiles[relpath]?.[PURPOSE_INPUT];
+    if (!tab) {
+        return;
+    }
+
+    let fileInfo = _projectFiles[relpath];
+    if (!fileInfo) {
+        Log.warn(`Could not find project file info for '${relpath}'.`);
+        return;
+    }
+
+    let compileTarget = fileInfo.compile_target;
+    if (!compileTarget) {
+        Log.info(`File '${relpath}' does not have a compile target.`);
+        return;
+    }
+
+    Common.loadingStart();
+
+    QuizGen.Project.compile(relpath, format)
+        .then(function(result) {
+            let purpose = `${PURPOSE_OUTPUT}::${format}`;
+            let outputRelpath = `${relpath}::${format}`;
+
+            _projectFiles[outputRelpath] = {
+                relpath: outputRelpath,
+                output: true,
+                format: format,
+                editable: false,
+            };
+
+            open(outputRelpath, result.filename, result.mime, result.content, purpose, true);
+        })
+        .catch(function(result) {
+            Log.error(result);
+        })
+        .finally(function() {
+            Common.loadingStop();
+        })
+    ;
 }
 
 function createEditorTab(component, params) {
@@ -233,10 +279,16 @@ function selectTab(relpath) {
 
     // Enable relevant controls.
 
-    let controls = document.querySelectorAll('.editor-controls .editor-control');
-    for (const control of controls) {
-        control.removeAttribute('disabled');
+    // All editable files can be saved.
+    document.querySelector('.editor-controls .editor-control-save').removeAttribute('disabled');
+
+    // The remaining controls only apply to compileable files.
+    if (!fileInfo.compile_target) {
+        return;
     }
+
+    document.querySelector('.editor-controls .editor-control-compile').removeAttribute('disabled');
+    document.querySelector('.editor-controls .editor-control-format').removeAttribute('disabled');
 
     let outputOptions = [];
     for (const format of OUTPUT_FORMATS) {

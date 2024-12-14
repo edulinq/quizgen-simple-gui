@@ -1,15 +1,13 @@
-import base64
+import qgg.util.encoding
 
-DEFAULT_ENCODING = 'utf-8'
-
-def to_base64(path, encoding = DEFAULT_ENCODING):
+def to_base64(path):
     with open(path, 'rb') as file:
         data = file.read()
 
-    data = base64.standard_b64encode(data)
-    return data.decode(DEFAULT_ENCODING)
+    return qgg.util.encoding.to_base64(data)
 
-def from_base64(data, path, encoding = DEFAULT_ENCODING):
-    data = base64.b64decode(data.encode(encoding), validate = True)
+def from_base64(data, path):
+    data = qgg.util.encoding.from_base64(data)
     with open(path, 'wb') as file:
         file.write(data)
+
