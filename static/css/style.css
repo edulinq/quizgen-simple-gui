@@ -62,11 +62,31 @@ html {
 }
 
 .editor-controls {
+    height: 2.2em;
+
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
     gap: 1em;
+}
+
+.editor-controls .editor-control {
+    height: 2em;
+}
+
+.editor-controls .editor-control-active-file {
+    flex: 1;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1em;
+}
+
+.editor-controls .editor-control-active-file span:first-child {
+    white-space: nowrap;
 }
 
 /* File Tree - BEGIN */

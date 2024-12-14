@@ -15,6 +15,7 @@ function load() {
         .then(function(result) {
             let container = document.querySelector('.file-manager');
             Render.fileTree(container, result.tree, handleFileClick);
+            Editor.setProject(result.project, result.tree);
         })
         .catch(function(result) {
             Log.error(result);
@@ -42,11 +43,17 @@ function loadFile(relpath) {
 }
 
 function openEditor(relpath, result) {
-    Editor.open(relpath, result.filename, result.mime, result.content, 'input', false);
+    Editor.open(relpath, result.filename, result.mime, result.content, Editor.PURPOSE_INPUT, false);
 }
 
-function handleFileClick(event, node, path) {
-    loadFile(path);
+function handleFileClick(event, node, relpath) {
+    if (Editor.shouldLoadFile(relpath)) {
+        loadFile(relpath);
+    } else {
+        // Even if we will not load the file,
+        // we should inform the editor to set this as the active file.
+        Editor.selectTab(relpath);
+    }
 }
 
 export {

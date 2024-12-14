@@ -3,8 +3,8 @@
  */
 
 import * as Render from './render.js'
+import * as Log from './log.js'
 
-// TEST
 const OUTPUT_FORMATS = [
     'html (raw)',
     'html',
@@ -13,9 +13,18 @@ const OUTPUT_FORMATS = [
     'json',
 ]
 
+const PURPOSE_INPUT = 'input';
+
 let _layout = undefined;
+let _selectedRelpath = undefined;
+
+// {relpath: {purpose: layout component (tab), ...}, ...}.
 let _activeFiles = {};
-let _selected_relpath = undefined;
+
+// {relpath: dirent info, ...}.
+let _projectFiles = {};
+
+let _emptyFormatOptions = '<option>*format*</option>';
 
 function init() {
     initControls()
@@ -23,46 +32,24 @@ function init() {
 }
 
 function initControls() {
-    let outputOptions = [];
-    for (const format of OUTPUT_FORMATS) {
-        outputOptions.push(`<option value='${format}'>${format}</option>`);
-    }
-
     let container = document.querySelector('.editor-controls');
     container.innerHTML = `
-        <button class='save' disabled>Save</button>
-        <button class='compile' disabled>Compile As →</button>
-        <select class='format'>
-            ${outputOptions.join("\n")}
-        </select>
+        <button class='editor-control editor-control-save' disabled>Save</button>
+        <button class='editor-control editor-control-compile' disabled>Compile</button>
+        <select class='editor-control editor-control-format' disabled>${_emptyFormatOptions}</select>
+        <span class='editor-control editor-control-active-file'></span>
     `;
 
     // Register handlers.
 
-    container.querySelector('.save').addEventListener('click', function(event) {
+    container.querySelector('.editor-control-save').addEventListener('click', function(event) {
         save();
     });
 
-    container.querySelector('.compile').addEventListener('click', function(event) {
-        let format = container.querySelector('.format').value;
+    container.querySelector('.editor-control-compile').addEventListener('click', function(event) {
+        let format = container.querySelector('.editor-control-format').value;
         compile(format);
     });
-}
-
-function save() {
-    // TEST
-    console.log("TEST - SAVE");
-
-    // TEST
-    // _selected_relpath
-}
-
-function compile(format) {
-    // TEST
-    console.log("TEST - compile ", format);
-
-    // TEST
-    // _selected_relpath
 }
 
 function initLayout() {
@@ -96,13 +83,54 @@ function initLayout() {
     _layout.init();
 }
 
+function setProject(projectInfo, tree) {
+    _projectFiles = {};
+
+    let walk = function(node) {
+        if (node.type === 'file') {
+            _projectFiles[node.relpath] = node;
+            return;
+        }
+
+        for (const dirent of node.dirents) {
+            walk(dirent);
+        }
+    };
+
+    walk(tree);
+}
+
+function save() {
+    // TEST
+    console.log("TEST - SAVE: ", _selectedRelpath);
+
+    // TEST
+    // _selectedRelpath
+}
+
+function compile(format) {
+    // TEST
+    console.log("TEST - compile ", format, " : ", _selectedRelpath);
+
+    // TEST
+    // _selectedRelpath
+}
+
 function createEditorTab(component, params) {
+    let fileInfo = _projectFiles[params.relpath];
+    if (!fileInfo) {
+        throw new Error(`Unable to find file info for new tab '${params.relpath}'.`);
+        return;
+    }
+
     if (_activeFiles[params.relpath]?.[params.purpose]) {
         throw new Error(`Cannot create new editor tab, a '${params.purpose}' tab already exists for '${params.relpath}'.`);
     }
 
     let container = component.getElement()[0];
-    Render.file(container, params.relpath, params.filename, params.mime, params.contentB64, params.readonly, selectTab);
+    let editable = Render.file(container, params.relpath, params.filename, params.mime, params.contentB64, params.readonly, selectTab);
+
+    fileInfo.editable = editable;
 
     // Keep track of when the tab is closed.
     component.on('destroy', function() {
@@ -124,18 +152,25 @@ function createEditorTab(component, params) {
 function tabClosed(relpath, purpose) {
     delete _activeFiles[relpath][purpose]
 
-    if (relpath == _selected_relpath) {
+    if (relpath == _selectedRelpath) {
         clearSelectedTab();
     }
 }
 
 function clearSelectedTab() {
-    _selected_relpath = undefined;
+    _selectedRelpath = undefined;
 
     let controlLabel = document.querySelector('.editor-controls .selected-relpath');
     if (controlLabel) {
         controlLabel.remove();
     }
+
+    let controls = document.querySelectorAll('.editor-controls .editor-control');
+    for (const control of controls) {
+        control.setAttribute('disabled', '');
+    }
+    document.querySelector('.editor-controls .editor-control-format').innerHTML = _emptyFormatOptions;
+    document.querySelector('.editor-controls .editor-control-active-file').innerHTML = '';
 }
 
 function selectTab(relpath) {
@@ -143,16 +178,48 @@ function selectTab(relpath) {
         return;
     }
 
-    if (_selected_relpath === relpath) {
+    if (_selectedRelpath === relpath) {
         return;
     }
 
     clearSelectedTab();
 
-    _selected_relpath = relpath;
-    document.querySelector('.editor-controls').insertAdjacentHTML('beforeend', `
+    _selectedRelpath = relpath;
+    document.querySelector('.editor-controls .editor-control-active-file').innerHTML = `
+        <span>Active File: </span>
         <span class='selected-relpath'>${relpath}</span>
-    `);
+    `;
+
+    // Get the information for this file.
+    let fileInfo = _projectFiles[relpath];
+    if (!fileInfo) {
+        Log.warn(`Unable to find file info for selected tab '${relpath}'.`);
+        return;
+    }
+
+    // If this file is readonly, we are done.
+    if (!fileInfo.editable) {
+        return;
+    }
+
+    // Enable relevant controls.
+
+    let controls = document.querySelectorAll('.editor-controls .editor-control');
+    for (const control of controls) {
+        control.removeAttribute('disabled');
+    }
+
+    let outputOptions = [];
+    for (const format of OUTPUT_FORMATS) {
+        outputOptions.push(`<option value='${format}'>${format}</option>`);
+    }
+    document.querySelector('.editor-controls .editor-control-format').innerHTML = outputOptions.join("\n");
+}
+
+// Check if the editor thinks a file should be allowed to load/fetched from the server.
+// If we see this file as open, we will not want to load it again.
+function shouldLoadFile(relpath) {
+    return (_activeFiles[relpath]?.[PURPOSE_INPUT] === undefined);
 }
 
 function open(relpath, filename, mime, contentB64, purpose, readonly) {
@@ -163,6 +230,7 @@ function open(relpath, filename, mime, contentB64, purpose, readonly) {
     let tab = _activeFiles[relpath]?.[purpose];
     if (tab !== undefined) {
         tab.parent.parent.setActiveContentItem(tab.parent);
+        selectTab(relpath);
         return;
     }
 
@@ -192,4 +260,9 @@ function open(relpath, filename, mime, contentB64, purpose, readonly) {
 export {
     init,
     open,
+    shouldLoadFile,
+    selectTab,
+    setProject,
+
+    PURPOSE_INPUT,
 }

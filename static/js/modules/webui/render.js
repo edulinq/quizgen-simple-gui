@@ -21,12 +21,16 @@ const EXTENSION_TO_ACE_MODE = {
 
 let _nextID = 0;
 
+// Render a file.
+// Return true if the file can be edited.
 function file(parentContainer, relpath, filename, rawMime, contentB64, readonly, clickCallback = undefined) {
     const [mime, classMime, mimePrefix] = parseMime(rawMime);
 
     let container = document.createElement('div');
     container.id = `file-${String(_nextID++).padStart(3, '0')}`;
     container.classList.add('file', `file-${classMime}`);
+    container.dataset.relpath = relpath;
+
     parentContainer.appendChild(container);
 
     // Keep track of when the tab was clicked to see which tab has use of the controls.
@@ -39,7 +43,7 @@ function file(parentContainer, relpath, filename, rawMime, contentB64, readonly,
     if (MIME_PREFIX_CODE.includes(mimePrefix) || MIME_CODE.includes(mime)) {
         let text = (new TextDecoder('utf-8')).decode(Uint8Array.fromBase64(contentB64));
         codeEditor(container, filename, mime, text, readonly);
-        return;
+        return true;
     }
 
     let html = '';
@@ -52,6 +56,7 @@ function file(parentContainer, relpath, filename, rawMime, contentB64, readonly,
     }
 
     container.innerHTML = html;
+    return false;
 }
 
 function parseMime(mime) {
