@@ -134,7 +134,7 @@ function saveAndCompile(format) {
         formats.add(openFormat);
     }
 
-    Common.loadingStart();
+    Common.loadingStart('.editor-area');
 
     // Save then compile all open formats.
     savePromise
@@ -165,7 +165,7 @@ function saveAndCompile(format) {
             Log.error(result);
         })
         .finally(function() {
-            Common.loadingStop();
+            Common.loadingStop('.editor-area');
         })
     ;
 }
