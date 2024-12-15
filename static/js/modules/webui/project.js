@@ -47,12 +47,12 @@ function openEditor(relpath, result) {
 }
 
 function handleFileClick(event, node, relpath) {
-    if (Editor.shouldLoadFile(relpath)) {
-        loadFile(relpath);
-    } else {
+    if (Editor.hasOpenTab(relpath)) {
         // Even if we will not load the file,
         // we should inform the editor to set this as the active file.
         Editor.selectTab(relpath);
+    } else {
+        loadFile(relpath);
     }
 }
 

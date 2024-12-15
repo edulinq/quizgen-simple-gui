@@ -85,8 +85,9 @@ html {
     gap: 1em;
 }
 
-.editor-controls .editor-control-active-file span:first-child {
+.editor-controls .editor-control-active-file .seletced-label {
     white-space: nowrap;
+    text-transform: capitalize;
 }
 
 /* File Tree - BEGIN */

@@ -24,9 +24,9 @@ let _layout = undefined;
 let _selectedRelpath = undefined;
 
 // {relpath: layout component (tab), ...}.
-let _activeEditorTabs = {};
+let _activeTabs = {};
 
-// {compile target (relpath): {format: layout component (tab), ...}, ...}.
+// {compile target (relpath): {format: relpath, ...}, ...}.
 let _activeOutputTabs = {};
 
 // {relpath: dirent info, ...}.
@@ -73,7 +73,7 @@ function initLayout() {
     let editorContainer = document.querySelector('.editor');
 
     _layout = new GoldenLayout(emptyConfig, editorContainer);
-    _layout.registerComponent('editor-tab', createEditorTab);
+    _layout.registerComponent('editor-tab', createTab);
     _layout.registerComponent('output-tab', createOutputTab);
 
     // Explicitly handle resizes, so ACE can have explicit dimensions.
@@ -185,35 +185,17 @@ function _save(relpath) {
     return QuizGen.Project.saveFile(relpath, contentB64);
 }
 
-function createEditorTab(component, params) {
-    if (_activeEditorTabs[params.relpath]) {
-        throw new Error(`Cannot create new editor tab, a tab already exists for '${params.relpath}'.`);
-    }
-
-    createTab(component, params);
-    _activeEditorTabs[params.relpath] = component;
-
-    // Keep track of when the tab is closed.
-    component.on('destroy', function() {
-        editorTabClosed(params.relpath);
-    });
-}
-
 function createOutputTab(component, params) {
-    let fileInfo = _projectFiles[params.relpath];
-    if (!fileInfo) {
-        throw new Error(`Unable to find file info for new tab '${params.relpath}'.`);
-    }
-
     createTab(component, params);
+
+    let fileInfo = _projectFiles[params.relpath];
     _activeOutputTabs[fileInfo.compileTarget] = _activeOutputTabs[fileInfo.compileTarget] ?? {};
-    _activeOutputTabs[fileInfo.compileTarget][fileInfo.format] = component;
+    _activeOutputTabs[fileInfo.compileTarget][fileInfo.format] = params.relpath;
 
     // Keep track of when the tab is closed.
     component.on('destroy', function() {
-        outputTabClosed(params.relpath, fileInfo.compileTarget, fileInfo.format);
+        delete _activeOutputTabs[fileInfo.compileTarget][fileInfo.format];
     });
-
 }
 
 function createTab(component, params) {
@@ -235,19 +217,18 @@ function createTab(component, params) {
         });
     });
 
+    _activeTabs[params.relpath] = component;
+
+    // Keep track of when the tab is closed.
+    component.on('destroy', function() {
+        editorTabClosed(params.relpath);
+    });
+
     selectTab(params.relpath);
 }
 
 function editorTabClosed(relpath) {
-    delete _activeEditorTabs[relpath];
-
-    if (relpath == _selectedRelpath) {
-        clearSelectedTab();
-    }
-}
-
-function outputTabClosed(relpath, compileTarget, format) {
-    delete _activeOutputTabs[compileTarget][format];
+    delete _activeTabs[relpath];
 
     if (relpath == _selectedRelpath) {
         clearSelectedTab();
@@ -280,6 +261,15 @@ function selectTab(relpath) {
     }
 
     clearSelectedTab();
+    _selectedRelpath = relpath;
+
+    // Check if this file is already open for editing,
+    // and switch to it if possible.
+    // Note the second part of the guard is to see if this tab is being opened right now.
+    let tab = _activeTabs[relpath];
+    if (tab && tab.tab) {
+        tab.parent.parent.setActiveContentItem(tab.parent);
+    }
 
     // Get the information for this file.
     let fileInfo = _projectFiles[relpath];
@@ -293,20 +283,16 @@ function selectTab(relpath) {
         return;
     }
 
-    _selectedRelpath = relpath;
-    document.querySelector('.editor-controls .editor-control-active-file').innerHTML = `
-        <span>Active File: </span>
-        <span class='selected-relpath'>${relpath}</span>
-    `;
-
     // Enable relevant controls.
+
+    let compileTarget = fileInfo.compileTarget;
 
     // All editable files can be saved.
     document.querySelector('.editor-controls .editor-control-save-compile').removeAttribute('disabled');
 
     // If the file can be compiled, then enable the compilable formats.
     let outputOptions = [OUTPUT_EMPTY_OPTION];
-    if (fileInfo.compileTarget) {
+    if (compileTarget) {
         outputOptions = OUTPUT_OPTIONS;
     }
 
@@ -316,12 +302,21 @@ function selectTab(relpath) {
     }
     document.querySelector('.editor-controls .editor-control-format').innerHTML = lines.join("\n");
     document.querySelector('.editor-controls .editor-control-format').removeAttribute('disabled');
+
+    // Get the proper label for the compile target (quiz, question, etc).
+    if (compileTarget) {
+        let typeLabel = _projectFiles[compileTarget]?.object_type ?? 'file';
+        document.querySelector('.editor-controls .editor-control-active-file').innerHTML = `
+            <span class='seletced-label'>Active ${typeLabel}: </span>
+            <span class='selected-compile-target'>${compileTarget}</span>
+        `;
+    }
 }
 
 // Check if the editor thinks a file should be allowed to load/fetched from the server.
 // If we see this file as open, we will not want to load it again.
-function shouldLoadFile(relpath) {
-    return (_activeEditorTabs[relpath] === undefined);
+function hasOpenTab(relpath) {
+    return (relpath in _activeTabs);
 }
 
 function openOutput(relpath, compileTarget, filename, mime, contentB64, format) {
@@ -329,11 +324,8 @@ function openOutput(relpath, compileTarget, filename, mime, contentB64, format) 
 }
 
 function openEditor(relpath, filename, mime, contentB64, readonly) {
-    // Check if this file is already open for editing,
-    // and switch to it if possible.
-    let tab = _activeEditorTabs[relpath];
-    if (tab) {
-        tab.parent.parent.setActiveContentItem(tab.parent);
+    // If there is already a tab open, switch to it.
+    if (hasOpenTab(relpath)) {
         selectTab(relpath);
         return;
     }
@@ -372,7 +364,7 @@ function open(relpath, filename, mime, contentB64, readonly, type) {
 export {
     init,
     openEditor,
-    shouldLoadFile,
+    hasOpenTab,
     selectTab,
     setProject,
 }
