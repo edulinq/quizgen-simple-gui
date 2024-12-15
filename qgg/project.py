@@ -190,7 +190,7 @@ def _compile(path, format):
             base_name = question.name
 
     name = base_name + '.' + format
-    mime, _ = mimetypes.guess_type(path)
+    mime, _ = mimetypes.guess_type(name)
 
     data = {
         'filename': name,

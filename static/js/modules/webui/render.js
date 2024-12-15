@@ -71,6 +71,12 @@ function parseMime(mime) {
 }
 
 function codeEditor(relpath, container, filename, mime, text, readonly) {
+    // If this is an HTML file,
+    // wrap the editor in a container that can switch between raw and rendered HTML.
+    if (mime === 'text/html') {
+        container = wrapHTMLEditor(container, text);
+    }
+
     let extension = filename.split('.').pop();
     let mode = EXTENSION_TO_ACE_MODE[extension] ?? DEFAULT_ACE_MODE;
 
@@ -100,6 +106,45 @@ function codeEditor(relpath, container, filename, mime, text, readonly) {
     container.qgg = {
         editor: editor,
     };
+}
+
+function wrapHTMLEditor(wrappingContainer, text) {
+    let sourceContainer = document.createElement('div');
+    sourceContainer.classList.add('html-source');
+    sourceContainer.classList.add('hidden');
+
+    let renderedContainer = document.createElement('iframe');
+    renderedContainer.classList.add('html-rendered');
+    renderedContainer.sandbox = '';
+    renderedContainer.srcdoc = text;
+
+    wrappingContainer.classList.add('html-wrap');
+    wrappingContainer.innerHTML = `
+        <div class='html-wrap-controls'>
+            <button value='source'>Source View</button>
+        </div>
+    `;
+
+    wrappingContainer.querySelector('button').addEventListener('click', function(event) {
+        if (event.target.value == 'source') {
+            sourceContainer.classList.remove('hidden');
+            renderedContainer.classList.add('hidden');
+
+            event.target.textContent = 'Rendered View';
+            event.target.value = 'rendered';
+        } else {
+            sourceContainer.classList.add('hidden');
+            renderedContainer.classList.remove('hidden');
+
+            event.target.textContent = 'Source View';
+            event.target.value = 'source';
+        }
+    });
+
+    wrappingContainer.appendChild(renderedContainer);
+    wrappingContainer.appendChild(sourceContainer);
+
+    return sourceContainer;
 }
 
 function dataURL(mime, contentB64) {

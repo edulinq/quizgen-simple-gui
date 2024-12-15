@@ -174,7 +174,7 @@ function saveAndCompile(format) {
 // If it does, then we will need to save first.
 // If it does not, then we will just resolve the save immediately and move to compiling.
 function _save(relpath) {
-    let element = document.querySelector(`.file.code-editor[data-relpath='${relpath}']`);
+    let element = document.querySelector(`.code-editor[data-relpath='${relpath}']`);
     if (!element) {
         return Promise.resolve(undefined);
     }
