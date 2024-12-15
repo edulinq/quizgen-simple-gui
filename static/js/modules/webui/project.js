@@ -43,7 +43,7 @@ function loadFile(relpath) {
 }
 
 function openEditor(relpath, result) {
-    Editor.open(relpath, result.filename, result.mime, result.content, Editor.PURPOSE_INPUT, false);
+    Editor.openEditor(relpath, result.filename, result.mime, result.content, false);
 }
 
 function handleFileClick(event, node, relpath) {

@@ -1,11 +1,11 @@
 import * as Core from './core.js'
 
-function compile(relpath, format) {
+function compile(relpath, formats) {
     return Core.sendRequest({
         endpoint: 'project/compile',
         payload: {
             'relpath': relpath,
-            'format': format,
+            'formats': formats,
         },
     });
 }

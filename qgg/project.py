@@ -47,21 +47,25 @@ def save_file(handler, path, project_dir, relpath = None, content = None, **kwar
 
     return data, None, None
 
-def compile(handler, path, project_dir, relpath = None, format = None, **kwargs):
+def compile(handler, path, project_dir, relpath = None, formats = None, **kwargs):
     file_path = _rel_file_check(project_dir, relpath)
     if (not isinstance(file_path, str)):
         return file_path
 
-    if (format is None):
-        return "Missing 'format'.", http.HTTPStatus.BAD_REQUEST, None
+    if (formats is None):
+        return "Missing 'formats'.", http.HTTPStatus.BAD_REQUEST, None
 
-    data, success = _compile(file_path, format)
-    if (not success):
-        return f"Compile failed for '{relpath}': '{data}'.", http.HTTPStatus.BAD_REQUEST, None
+    result = {}
+    for format in formats:
+        data, success = _compile(file_path, format)
+        if (not success):
+            return f"Compile failed for '{relpath}' ({format}): '{data}'.", http.HTTPStatus.BAD_REQUEST, None
 
-    data['relpath'] = relpath
+        data['relpath'] = relpath
 
-    return data, None, None
+        result[format] = data
+
+    return result, None, None
 
 def _rel_file_check(project_dir, relpath):
     """
@@ -146,7 +150,7 @@ def _augment_tree(root, parent_real_path, parent_relpath = None):
     if (compile_target is not None):
         for dirent in root.get('dirents', []):
             if (dirent['type'] == 'file'):
-                dirent['compile_target'] = compile_target
+                dirent['compileTarget'] = compile_target
 
 def _guess_object_type(path):
     """

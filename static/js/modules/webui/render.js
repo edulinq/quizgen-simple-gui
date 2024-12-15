@@ -45,7 +45,7 @@ function file(parentContainer, relpath, filename, rawMime, contentB64, readonly,
     if (MIME_PREFIX_CODE.includes(mimePrefix) || MIME_CODE.includes(mime)) {
         let text = Util.b64StringToText(contentB64);
         codeEditor(relpath, container, filename, mime, text, readonly);
-        return true;
+        return !readonly;
     }
 
     let html = '';
