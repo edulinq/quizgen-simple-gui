@@ -1,0 +1,37 @@
+name: Main
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+        os: ['ubuntu-22.04', 'macos-13', 'macos-14', 'windows-2022']
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set Up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache Python Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ runner.os }}-os:${{ matrix.os }}-python:${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Install Python Dependencies
+        shell: bash
+        run: pip3 install -r requirements.txt
+
+      - name: Check Python Version Compatibility
+        shell: bash
+        run: vermin --no-tips --no-parse-comments --target=3.9- --violations qgg
