@@ -18,7 +18,7 @@ authors = [
     {name = "Eriq Augustine", email = "eriq@edulinq.org"},
 ]
 
-keywords = ['education']
+keywords = ['education', 'quiz', 'canvas', 'tex', 'latex', 'qti']
 classifiers = [
     'Intended Audience :: Education',
     'License :: OSI Approved :: MIT License',
@@ -27,11 +27,14 @@ classifiers = [
 
 dynamic = [
     "version",
+    "dependencies",
+    "optional-dependencies",
 ]
 
-dependencies = [
-    "eq-quizgen>=0.3.0",
-]
+[tool.setuptools.dynamic]
+version = {attr = "qgg.__version__"}
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = {file = ["requirements-dev.txt"]}}
 
 [project.urls]
 Homepage = "https://github.com/edulinq/quizgen-simple-gui"
@@ -39,9 +42,6 @@ Repository = "https://github.com/edulinq/quizgen-simple-gui"
 
 [tool.setuptools]
 include-package-data = true
-
-[tool.setuptools.dynamic]
-version = {attr = "qgg.__version__"}
 
 [tool.setuptools.package-data]
 "*" = ["*"]
