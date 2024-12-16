@@ -14,6 +14,11 @@ import quizgen.util.json
 import qgg.util.dirent
 import qgg.util.file
 
+# Compiled output filename extensions will take the value of the format if not overwritten here.
+OVERRIDE_EXTENSIONS = {
+    'canvas': 'canvas.html',
+}
+
 def fetch(handler, path, project_dir, **kwargs):
     tree = qgg.util.dirent.tree(project_dir)
     _augment_tree(tree, project_dir)
@@ -205,7 +210,8 @@ def _compile(path, format):
         if (question.name != ''):
             base_name = question.name
 
-    name = base_name + '.' + format
+    extension = OVERRIDE_EXTENSIONS.get(format, format)
+    name = base_name + '.' + extension
     mime, _ = mimetypes.guess_type(name)
 
     data = {
