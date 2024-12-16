@@ -1,9 +1,10 @@
 import http
+import importlib.resources
 import mimetypes
-import os
 import re
 
 import qgg.common
+import qgg.static
 
 """
 Handler funcs are functions for handling the core of an API request.
@@ -40,18 +41,18 @@ def static(handler, path, project_dir, **kwargs):
     parts = path.strip().split('/')
 
     # Build the static path skipping the '/static' part of the URL path.
-    static_path = os.path.join(qgg.common.STATIC_DIR, *parts[2:])
+    # importlib requires paths to use a '/' path seperator.
+    static_path = '/'.join(parts[2:])
 
     return _serve_file(static_path, "static path not found: '%s'." % (path), **kwargs)
 
 def _serve_file(path, not_found_message = None, **kwargs):
-    if (not os.path.isfile(path)):
+    if (not importlib.resources.files(qgg.static).joinpath(path).is_file()):
         if (not_found_message is None):
             not_found_message = "path not found: '%s'." % (path)
         return "404 %s" % not_found_message, http.HTTPStatus.NOT_FOUND, None
 
-    with open(path, 'rb') as file:
-        data = file.read()
+    data = importlib.resources.files(qgg.static).joinpath(path).read_bytes()
 
     code = http.HTTPStatus.OK
     headers = {}

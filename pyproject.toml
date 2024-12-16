@@ -8,15 +8,14 @@ requires = [
 ]
 
 [project]
-name = "edq-quizgen-simple-gui"
-version = "0.0.1"
-description = "A simple GUI for the Quiz Generator meant to be run on a local server."
+name = "edq-quizcomp-simple-gui"
+description = "A simple GUI for the Quiz Composer meant to be run on a local server."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
 
 authors = [
-    {name = "Eriq Augustine", email = "eaugusti@ucsc.edu"},
+    {name = "Eriq Augustine", email = "eriq@edulinq.org"},
 ]
 
 keywords = ['education']
@@ -26,15 +25,28 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
 ]
 
+dynamic = [
+    "version",
+]
+
 dependencies = [
-    "eq-quizgen>=0.2.8",
+    "eq-quizgen>=0.3.0",
 ]
 
 [project.urls]
 Homepage = "https://github.com/edulinq/quizgen-simple-gui"
 Repository = "https://github.com/edulinq/quizgen-simple-gui"
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "qgg.__version__"}
+
+[tool.setuptools.package-data]
+"*" = ["*"]
+
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["qgg*", "static"]
-namespaces = false
+include = ["qgg*"]
+namespaces = true

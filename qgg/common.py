@@ -1,49 +1,12 @@
 import functools
 import http
 import logging
-import os
 import re
+
+import qgg
 
 API_PREFIX = '/api/v01'
 ENCODING = 'utf-8'
-
-THIS_DIR = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-ROOT_DIR = os.path.join(THIS_DIR, '..')
-STATIC_DIR = os.path.join(ROOT_DIR, 'static')
-
-PACKAGE_CONFIG_PATH = os.path.join(ROOT_DIR, 'pyproject.toml')
-
-UNKNOWN_VERSION = '?.?.?'
-VERSION_REGEX = r'^version\s*=\s*["\'](\d+\.\d+\.\d+)["\']$'
-
-_version = None
-
-def version():
-    global _version
-
-    if (_version is not None):
-        return _version
-
-    _version = _fetch_version()
-    return _version
-
-def _fetch_version():
-    if (not os.path.isfile(PACKAGE_CONFIG_PATH)):
-        logging.error("Could not find version file: '%s'." % (PACKAGE_CONFIG_PATH))
-        return UNKNOWN_VERSION
-
-    with open(PACKAGE_CONFIG_PATH, 'r') as file:
-        for line in file:
-            line = line.strip()
-            if (line == ''):
-                continue
-
-            match = re.search(VERSION_REGEX, line)
-            if (match is not None):
-                return match.group(1)
-
-    logging.error("Could not match version within package config file: '%s'." % (PACKAGE_CONFIG_PATH))
-    return UNKNOWN_VERSION
 
 def build_api_route(endpoint, handler_func):
     """
@@ -113,5 +76,5 @@ def wrap_api_response(data, code, endpoint, message = None, success = True):
         'message': message,
         'endpoint': endpoint,
         'content': data,
-        'server-version': version()
+        'server-version': qgg.__version__,
     }
