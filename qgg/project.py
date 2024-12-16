@@ -4,9 +4,11 @@ import os
 
 import quizgen.constants
 import quizgen.converter.convert
+import quizgen.pdf
 import quizgen.project
 import quizgen.question.base
 import quizgen.quiz
+import quizgen.util.dirent
 import quizgen.util.json
 
 import qgg.util.dirent
@@ -131,7 +133,7 @@ def _augment_tree(root, parent_real_path, parent_relpath = None):
     # If this is a file, check its type and return.
     if (root['type'] == 'file'):
         if (root['name'].lower().endswith('.json')):
-            root['object_type'] = _guess_object_type(real_path)
+            root['objectType'] = _guess_object_type(real_path)
 
         return
 
@@ -143,7 +145,7 @@ def _augment_tree(root, parent_real_path, parent_relpath = None):
         _augment_tree(dirent, real_path, relpath)
 
         # Now that this dirent has been aurmented, check if it is a compile target.
-        if (dirent.get('object_type') in ['quiz', 'question']):
+        if (dirent.get('objectType') in ['quiz', 'question']):
             compile_target = dirent['relpath']
 
     # If we have a compile target, set that to be the target for each file in this dir.
@@ -160,11 +162,20 @@ def _guess_object_type(path):
 
     data = quizgen.util.json.load_path(path)
 
+    # First, look at the 'type' field.
     type = data.get('type', None)
-    if (type not in quizgen.constants.JSON_OBJECT_TYPES):
-        return None
+    if (type in quizgen.constants.JSON_OBJECT_TYPES):
+        return type
 
-    return type
+    # Try to guess based on other attributes.
+
+    if ('title' in data):
+        return quizgen.constants.TYPE_QUIZ
+
+    if ('question_type' in data):
+        return quizgen.constants.TYPE_QUESTION
+
+    return None
 
 def _compile(path, format):
     type = _guess_object_type(path)
@@ -177,11 +188,16 @@ def _compile(path, format):
     base_name = type
 
     if (type == quizgen.constants.TYPE_QUIZ):
-        quiz = quizgen.quiz.Quiz.from_path(path)
-        variant = quiz.create_variant()
-        content = quizgen.converter.convert.convert_variant(variant, format = format)
 
-        base_name = quiz.title
+        if (format == 'pdf'):
+            content, base_name = _make_pdf(path)
+        else:
+            quiz = quizgen.quiz.Quiz.from_path(path)
+            base_name = quiz.title
+
+            variant = quiz.create_variant()
+
+            content = quizgen.converter.convert.convert_variant(variant, format = format)
     else:
         question = quizgen.question.base.Question.from_path(path)
         content = quizgen.converter.convert.convert_question(question, format = format)
@@ -199,3 +215,16 @@ def _compile(path, format):
     }
 
     return data, True
+
+def _make_pdf(path):
+    temp_dir = quizgen.util.dirent.get_temp_path('qgg-pdf-')
+    quiz, _, _ = quizgen.pdf.make_with_path(path, skip_key = True, base_out_dir = temp_dir)
+
+    out_path = os.path.join(temp_dir, quiz.title, f"{quiz.title}.pdf")
+    if (not os.path.isfile(out_path)):
+        raise ValueError(f"Unable to find PDF output in: '{out_path}'.")
+
+    with open(out_path, 'rb') as file:
+        data = file.read()
+
+    return data, quiz.title

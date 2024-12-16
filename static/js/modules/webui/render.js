@@ -11,7 +11,10 @@ const MIME_PREFIX_OBJECT = [];
 const MIME_OBJECT = ['application/pdf'];
 
 const MIME_PREFIX_CODE = ['text'];
-const MIME_CODE = ['application/json'];
+const MIME_CODE = [
+    'application/json',
+    'application/x-tex',
+];
 
 const DEFAULT_ACE_MODE = 'text';
 const EXTENSION_TO_ACE_MODE = {

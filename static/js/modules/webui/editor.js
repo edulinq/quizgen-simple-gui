@@ -9,16 +9,23 @@ import * as Util from './util.js'
 
 import * as QuizGen from '/js/modules/quizgen/base.js'
 
-// TODO: HTML (rendered)
-// TODO: PDF
-const OUTPUT_FORMATS = [
+const OUTPUT_QUESTION_FORMATS = [
     'html',
     'canvas',
     'json',
     'tex',
 ];
+
+const OUTPUT_QUIZ_FORMATS = OUTPUT_QUESTION_FORMATS.concat([
+    'pdf',
+]);
+
 const OUTPUT_EMPTY_OPTION = ['-', ''];
-const OUTPUT_OPTIONS = [OUTPUT_EMPTY_OPTION].concat(OUTPUT_FORMATS.map((format) => [format, format]));
+
+const OUTPUT_OPTIONS = {
+    'quiz': [OUTPUT_EMPTY_OPTION].concat(OUTPUT_QUIZ_FORMATS.map((format) => [format, format])),
+    'question': [OUTPUT_EMPTY_OPTION].concat(OUTPUT_QUESTION_FORMATS.map((format) => [format, format])),
+};
 
 let _layout = undefined;
 let _selectedRelpath = undefined;
@@ -286,14 +293,15 @@ function selectTab(relpath) {
     // Enable relevant controls.
 
     let compileTarget = fileInfo.compileTarget;
+    let compileObjectType = _projectFiles[compileTarget]?.objectType;
 
     // All editable files can be saved.
     document.querySelector('.editor-controls .editor-control-save-compile').removeAttribute('disabled');
 
     // If the file can be compiled, then enable the compilable formats.
     let outputOptions = [OUTPUT_EMPTY_OPTION];
-    if (compileTarget) {
-        outputOptions = OUTPUT_OPTIONS;
+    if (compileObjectType in OUTPUT_OPTIONS) {
+        outputOptions = OUTPUT_OPTIONS[compileObjectType];
     }
 
     let lines = []
