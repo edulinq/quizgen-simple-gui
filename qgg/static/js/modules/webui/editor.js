@@ -44,8 +44,9 @@ let _projectFiles = {};
 let _emptyFormatOptions = `<option value='${OUTPUT_EMPTY_OPTION[1]}'>${OUTPUT_EMPTY_OPTION[0]}</option>`;
 
 function init() {
-    initControls()
-    initLayout()
+    initControls();
+    initLayout();
+    initShortcuts();
 }
 
 function initControls() {
@@ -59,8 +60,7 @@ function initControls() {
     // Register handlers.
 
     container.querySelector('.editor-control-save-compile').addEventListener('click', function(event) {
-        let format = container.querySelector('.editor-control-format').value;
-        saveAndCompile(format);
+        saveAndCompile();
     });
 }
 
@@ -96,6 +96,16 @@ function initLayout() {
     _layout.init();
 }
 
+function initShortcuts() {
+    document.addEventListener('keydown', function(event) {
+        if ((event.code === 'KeyS') && (event.ctrlKey)) {
+            // Ctrl+S -- Save
+            event.preventDefault();
+            saveAndCompile();
+        }
+    });
+}
+
 function setProject(projectInfo, tree, supportedFeatures) {
     _supportedFeatures = supportedFeatures;
     _projectFiles = {};
@@ -114,7 +124,7 @@ function setProject(projectInfo, tree, supportedFeatures) {
     walk(tree);
 }
 
-function saveAndCompile(format) {
+function saveAndCompile(format = undefined) {
     let relpath = _selectedRelpath;
     if (!relpath) {
         return;
@@ -130,6 +140,10 @@ function saveAndCompile(format) {
     if (!compileTarget) {
         Log.warn(`File '${relpath}' does not have a compile target.`);
         return;
+    }
+
+    if (!format) {
+        format = document.querySelector('.editor-control-format').value;
     }
 
     let savePromise = _save(relpath);
