@@ -34,6 +34,8 @@ def run(project_dir, port = DEFAULT_PORT):
         raise ValueError("Project dir does not exist: '%s'." % (str(project_dir)))
 
     logging.info("Starting server on port %s, serving project at '%s'." % (str(port), project_dir))
+    logging.info("If a browser window does not open, you may use the following link:")
+    logging.info(f"http://127.0.0.1:{port}")
 
     _handler.init(project_dir)
     server = http.server.ThreadingHTTPServer(('', port), _handler)
