@@ -27,6 +27,8 @@ const OUTPUT_OPTIONS = {
     'question': [OUTPUT_EMPTY_OPTION].concat(OUTPUT_QUESTION_FORMATS.map((format) => [format, format])),
 };
 
+let _supportedFeatures = {}
+
 let _layout = undefined;
 let _selectedRelpath = undefined;
 
@@ -94,7 +96,8 @@ function initLayout() {
     _layout.init();
 }
 
-function setProject(projectInfo, tree) {
+function setProject(projectInfo, tree, supportedFeatures) {
+    _supportedFeatures = supportedFeatures;
     _projectFiles = {};
 
     let walk = function(node) {
@@ -306,6 +309,10 @@ function selectTab(relpath) {
 
     let lines = []
     for (const [label, value] of outputOptions) {
+        if ((value === 'pdf') && (!_supportedFeatures['pdf'])) {
+            continue;
+        }
+
         lines.push(`<option value='${value}'>${label}</option>`);
     }
     document.querySelector('.editor-controls .editor-control-format').innerHTML = lines.join("\n");

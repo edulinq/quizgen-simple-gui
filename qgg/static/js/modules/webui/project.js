@@ -15,7 +15,7 @@ function load() {
         .then(function(result) {
             let container = document.querySelector('.file-manager');
             Render.fileTree(container, result.tree, handleFileClick);
-            Editor.setProject(result.project, result.tree);
+            Editor.setProject(result.project, result.tree, result.supportedFeatures);
         })
         .catch(function(result) {
             Log.error(result);

@@ -4,15 +4,17 @@ import os
 
 import quizgen.constants
 import quizgen.converter.convert
+import quizgen.katex
+import quizgen.latex
 import quizgen.pdf
 import quizgen.project
 import quizgen.question.base
 import quizgen.quiz
 import quizgen.util.dirent
+import quizgen.util.file
 import quizgen.util.json
 
 import qgg.util.dirent
-import qgg.util.file
 
 # Compiled output filename extensions will take the value of the format if not overwritten here.
 OVERRIDE_EXTENSIONS = {
@@ -27,6 +29,10 @@ def fetch(handler, path, project_dir, **kwargs):
         'project': quizgen.project.Project.from_path(project_dir).to_pod(),
         'tree': tree,
         'dirname': os.path.basename(project_dir),
+        'supportedFeatures': {
+            'pdf': quizgen.latex.is_available(),
+            'htmlEquations': quizgen.katex.is_available(),
+        },
     }
 
     return data, None, None
@@ -46,7 +52,7 @@ def save_file(handler, path, project_dir, relpath = None, content = None, **kwar
     if (content is None):
         return "Missing 'content'.", http.HTTPStatus.BAD_REQUEST, None
 
-    qgg.util.file.from_base64(content, file_path)
+    quizgen.util.file.from_base64(content, file_path)
 
     data = {
         'relpath': relpath,
@@ -107,7 +113,7 @@ def _resolve_relpath(project_dir, relpath):
     return os.path.abspath(os.path.join(project_dir, relpath))
 
 def _create_api_file(path, relpath):
-    content = qgg.util.file.to_base64(path)
+    content = quizgen.util.file.to_base64(path)
     mime, _ = mimetypes.guess_type(path)
     filename = os.path.basename(path)
 
@@ -217,7 +223,7 @@ def _compile(path, format):
     data = {
         'filename': name,
         'mime': mime,
-        'content': qgg.util.encoding.to_base64(content),
+        'content': quizgen.util.encoding.to_base64(content),
     }
 
     return data, True
