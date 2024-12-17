@@ -192,7 +192,14 @@ function fileTreeNode(root, lines = []) {
 
     lines.push(`<ul class='file-tree-dirents' data-relpath='${root.relpath}'>`);
 
-    for (const node of root.dirents) {
+    let sortedDirents = [];
+    if (root.dirents) {
+        sortedDirents = root.dirents.toSorted(function(a, b) {
+            return Util.caseInsensitiveStringCompare(a.name, b.name);
+        });
+    }
+
+    for (const node of sortedDirents) {
         if (node.type === 'file') {
             const [mime, classMime, mimePrefix] = parseMime(node.mime);
             lines.push(`<li class='file-tree-dirent file-tree-file file-tree-file-${mimePrefix}' data-mime='${mime}' data-relpath='${node.relpath}'><span>${node.name}</span></li>`)

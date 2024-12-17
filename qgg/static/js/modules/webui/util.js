@@ -1,6 +1,6 @@
 // Note that this will be easier once Uint8Array.fromBase64() is widely supported.
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa#unicode_strings
-function textTob64String(text) {
+function textToB64String(text) {
     const encoder = new TextEncoder();
     const bytes = encoder.encode(text);
 
@@ -24,7 +24,13 @@ function b64StringToText(contentB64) {
     return decoder.decode(bytes);
 }
 
+function caseInsensitiveStringCompare(a, b) {
+    return a.localeCompare(b, undefined, { sensitivity: 'base' });
+}
+
 export {
     b64StringToText,
-    textTob64String,
+    textToB64String,
+
+    caseInsensitiveStringCompare,
 }

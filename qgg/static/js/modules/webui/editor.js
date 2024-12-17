@@ -204,7 +204,7 @@ function _save(relpath) {
     }
 
     let text = element.qgg.editor.getValue();
-    let contentB64 = Util.textTob64String(text);
+    let contentB64 = Util.textToB64String(text);
 
     return QuizGen.Project.saveFile(relpath, contentB64);
 }
