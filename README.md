@@ -14,6 +14,8 @@ Documentation Table of Contents:
    - [Command Line](#command-line)
    - [Web](#web)
      - [Keyboard Shortcuts](#keyboard-shortcuts)
+ - [Known Issues](#known-issues)
+   - [PDF Focus](#pdf-focus)
 
 ## Installation / Requirements
 
@@ -88,3 +90,12 @@ Saving a file will always cause exiting output tabs to recompile.
 | Key             | Action |
 |-----------------|--------|
 | `control` + `s` | Save and Compile. This is the same as clicking the "Save & Compile" button. |
+
+# Known Issues
+
+## PDF Focus
+
+How PDFs are rendered is largely handled by your browser.
+As such, we have less control over how exactly they are displayed and how they interact with the rest of the UI.
+You may find some issues when working with PDFs such as not being able to focus the PDF when clicking between editor tabs.
+Sometimes clicking multiple times or clicking on the tab's header can help.
