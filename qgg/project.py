@@ -148,22 +148,37 @@ def _augment_tree(root, parent_real_path, parent_relpath = None):
 
         return
 
+    # Potential compile targets.
     # A compile target is the quiz/question that should be compiled
     # when this dirent is selected and the compile button is pressed.
-    compile_target = None
+    # { base name (without extension): relpath, ...}
+    compile_targets = {}
 
     for dirent in root.get('dirents', []):
         _augment_tree(dirent, real_path, relpath)
 
         # Now that this dirent has been aurmented, check if it is a compile target.
         if (dirent.get('objectType') in ['quiz', 'question']):
-            compile_target = dirent['relpath']
+            compile_targets[os.path.splitext(dirent['name'])[0]] = dirent['relpath']
 
-    # If we have a compile target, set that to be the target for each file in this dir.
-    if (compile_target is not None):
-        for dirent in root.get('dirents', []):
-            if (dirent['type'] == 'file'):
-                dirent['compileTarget'] = compile_target
+    # Associate the appropriate compile target with a file (not dir).
+    # If there is only one compile target, all files in this dir get that compile target.
+    # If there are multiple compile targets, then the target will need to have a matching base name (no extension).
+    for dirent in root.get('dirents', []):
+        if (dirent['type'] != 'file'):
+            continue
+
+        if (len(compile_targets) == 0):
+            continue
+
+        compile_target = None
+        if (len(compile_targets) == 1):
+            compile_target = list(compile_targets.values())[0]
+        else:
+            compile_target = compile_targets.get(os.path.splitext(dirent['name'])[0], None)
+
+        if (compile_target is not None):
+            dirent['compileTarget'] = compile_target
 
 def _guess_object_type(path):
     """
