@@ -56,8 +56,8 @@ def _get_parser():
     parser = quizgen.args.Parser(description = "Start the webserver for the Quiz Generator.")
 
     parser.add_argument('base_dir', metavar = 'PROJECT_DIR',
-        action = 'store', type = str,
-        help = 'The base directory for the quizgen project the GUI will open.')
+        action = 'store', type = str, nargs = '?', default = '.',
+        help = 'The base directory for the quizgen project the GUI will open (default: %(default)s)')
 
     parser.add_argument('--port', dest = 'port',
         action = 'store', type = int, default = qgg.server.DEFAULT_PORT,
